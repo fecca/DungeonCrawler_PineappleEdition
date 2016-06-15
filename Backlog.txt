@@ -1,0 +1,12 @@
+2016-06-16
+----------
+Close open modules
+Improve algorithm
+Add more modules
+Add light sources
+Add purpose
+Add items
+Add weapons/attacks
+Add AI/monsters
+Add UI
+Add inventory
