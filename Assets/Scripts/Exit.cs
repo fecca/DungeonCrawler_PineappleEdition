@@ -1,7 +1,6 @@
 ﻿using System;
 using UnityEngine;
 
-[Serializable]
 public class Exit
 {
 	public Transform Transform { get; set; }

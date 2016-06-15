@@ -3,8 +3,6 @@ using UnityEngine;
 
 public static class Extensions
 {
-	private static System.Random _random = new System.Random(13);
-
 	public static T GetRandomElement<T>(this List<T> list)
 	{
 		if (list.Count <= 0)
@@ -12,8 +10,7 @@ public static class Extensions
 			return default(T);
 		}
 
-
-		return list[_random.Next(0, list.Count)];
+		return list[Random.Range(0, list.Count)];
 	}
 
 	public static void SnapTo(this GameObject self, GameObject staticTarget)

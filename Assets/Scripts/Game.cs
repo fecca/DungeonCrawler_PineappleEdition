@@ -8,7 +8,6 @@ public class Game : MonoBehaviour
 	private void Start()
 	{
 		DungeonHandler.CreateDungeon();
-
 		CreateDude();
 	}
 
