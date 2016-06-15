@@ -5,8 +5,8 @@ public class Room : MonoBehaviour
 {
 	public bool IsColliding { get; set; }
 
-	public List<Transform> ExitPoints = new List<Transform>();
 	public ModuleType Type;
+	public List<Transform> ExitPoints = new List<Transform>();
 
 	private List<Exit> Exits;
 
@@ -24,9 +24,21 @@ public class Room : MonoBehaviour
 	}
 	public void OnCollisionEnter(Collision collision)
 	{
-		//IsColliding = true;
-		//Debug.Log("Collided");
+		IsColliding = true;
 	}
+	//public void OnDrawGizmos()
+	//{
+	//	if (DrawBoundingBoxes)
+	//	{
+	//		var bounds = new Bounds(transform.position, Vector3.one);
+	//		foreach (var collider in GetComponentsInChildren<Collider>())
+	//		{
+	//			bounds.Encapsulate(collider.bounds);
+	//		}
+	//		bounds.size *= 0.95f;
+	//		Gizmos.DrawWireCube(bounds.center, bounds.size);
+	//	}
+	//}
 
 	public List<Exit> GetExits()
 	{

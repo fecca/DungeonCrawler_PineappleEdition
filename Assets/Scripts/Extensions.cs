@@ -18,7 +18,7 @@ public static class Extensions
 
 	public static void SnapTo(this GameObject self, GameObject staticTarget)
 	{
-		var newModule = self.transform.parent;
+		var newModule = self.transform.parent.parent;
 
 		var forwardVectorToMatch = -staticTarget.transform.forward;
 		var correctiveRotation = Azimuth(forwardVectorToMatch) - Azimuth(self.transform.forward);
