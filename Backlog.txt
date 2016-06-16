@@ -3,10 +3,16 @@
 Close open modules
 Improve algorithm
 Add more modules
-Add light sources
+Add light sources/torches
 Add purpose
 Add items
 Add weapons/attacks
 Add AI/monsters
 Add UI
 Add inventory
+
+2016-06-17
+----------
+Improve algorithm
+  - Main path
+  - X amount of modules not following the path
