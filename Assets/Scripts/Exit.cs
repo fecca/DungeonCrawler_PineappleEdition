@@ -1,8 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public class Exit
+public class Exit : MonoBehaviour
 {
-	public Transform Transform { get; set; }
-	public bool Open { get; set; }
+	public bool Open;
 }

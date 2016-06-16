@@ -8,7 +8,8 @@ public class Game : MonoBehaviour
 	private void Start()
 	{
 		DungeonHandler.CreateDungeon();
-		CreateDude();
+		Debug.Log(Time.time + " seconds to create dungeon.");
+		//CreateDude();
 	}
 
 	private void CreateDude()

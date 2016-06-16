@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class DungeonHandler : MonoBehaviour
@@ -8,25 +9,26 @@ public class DungeonHandler : MonoBehaviour
 	public int NumberOfModules = 100;
 
 	private List<Module> _modules;
-	private int _numberOfConsecutiveCorridors;
-	private const int _maximumNumberOfConsecutiveCorridors = 2;
+	private List<Bounds> _boundsList;
 
 	private void Awake()
 	{
 		_modules = new List<Module>();
+		_boundsList = new List<Bounds>();
 	}
 
 	public void CreateDungeon()
 	{
 		var modulesToIterate = new List<Module>();
-		var bounds = new List<Bounds>();
 		var containerGameObject = new GameObject("Dungeon");
 
 		// Create first module
 		var gameObject = Instantiate(GetRandomModulePrefabOfType(ModuleType.Room));
 		var firstModule = gameObject.GetComponent<Module>();
+		firstModule.transform.parent = containerGameObject.transform;
+		_modules.Add(firstModule);
+		_boundsList.Add(GetModuleBounds(gameObject));
 		modulesToIterate.Add(firstModule);
-		bounds.Add(GetModuleBounds(gameObject));
 
 		for (var moduleIndex = 0; moduleIndex < NumberOfModules; moduleIndex++)
 		{
@@ -35,46 +37,50 @@ public class DungeonHandler : MonoBehaviour
 			{
 				break;
 			}
-			_modules.Add(module);
-			module.transform.parent = containerGameObject.transform;
 
 			var exits = module.GetExits();
 			for (var exitIndex = 0; exitIndex < exits.Count; exitIndex++)
 			{
 				// Skip closed exits
-				var originalModuleExit = exits[exitIndex];
-				if (!originalModuleExit.Open)
+				var moduleExit = exits[exitIndex];
+				if (!moduleExit.Open)
 				{
 					continue;
 				}
 
-				// Create new room and find exits
-				var newType = GetRandomModuleType(module.Type);
-				var newGameObject = Instantiate(GetRandomModulePrefabOfType(newType));
-				var newModule = newGameObject.GetComponent<Module>();
-				var newModuleExits = newModule.GetExits();
-				var exitToMatch = newModuleExits.GetRandomElement();
-
-				// Match exits
-				exitToMatch.Transform.gameObject.SnapTo(originalModuleExit.Transform.gameObject);
-
-				// Check if new module intersects with existing modules
-				var newModuleBounds = GetModuleBounds(newGameObject);
-				if (BoundsIntersect(newModuleBounds, bounds))
+				var retries = 0;
+				while (retries < 1)
 				{
+					// Create room and find exits
+					var newType = GetRandomModuleType(module.Type);
+					var newGameObject = Instantiate(GetRandomModulePrefabOfType(newType));
+					var newModule = newGameObject.GetComponent<Module>();
+					var newModuleExit = newModule.GetExits().GetRandomElement();
+					newModuleExit.gameObject.SnapTo(moduleExit.gameObject);
+					var newModuleBounds = GetModuleBounds(newGameObject);
+
+					// Check intersection
+					if (!BoundsIntersect(newModuleBounds))
+					{
+						newModule.transform.parent = containerGameObject.transform;
+						_modules.Add(newModule);
+						_boundsList.Add(newModuleBounds);
+						modulesToIterate.Add(newModule);
+						newModuleExit.Open = false;
+						moduleExit.Open = false;
+
+						break;
+					}
+
+					// Destroy intersecting room and go to next loop
 					Destroy(newGameObject);
-					continue;
+					retries++;
 				}
-				bounds.Add(newModuleBounds);
-
-				// Close the exits of both rooms
-				exitToMatch.Open = false;
-				originalModuleExit.Open = false;
-
-				modulesToIterate.Add(newModule);
 			}
 			modulesToIterate.Remove(module);
 		}
+
+		OnDungeonCreated();
 	}
 	public Vector3 GetStartingPosition()
 	{
@@ -98,11 +104,11 @@ public class DungeonHandler : MonoBehaviour
 
 		return bounds;
 	}
-	private bool BoundsIntersect(Bounds objectBounds, List<Bounds> boundsList)
+	private bool BoundsIntersect(Bounds objectBounds)
 	{
-		for (var i = 0; i < boundsList.Count; i++)
+		for (var i = 0; i < _boundsList.Count; i++)
 		{
-			if (objectBounds.Intersects(boundsList[i]))
+			if (objectBounds.Intersects(_boundsList[i]))
 			{
 				return true;
 			}
@@ -124,22 +130,63 @@ public class DungeonHandler : MonoBehaviour
 	}
 	private ModuleType GetRandomModuleType(ModuleType type)
 	{
-		if (type == ModuleType.Corridor)
-		{
-			if (_numberOfConsecutiveCorridors >= _maximumNumberOfConsecutiveCorridors)
-			{
-				_numberOfConsecutiveCorridors = 0;
-				return ModuleType.Room;
-			}
+		return type == ModuleType.Room ? ModuleType.Corridor : ModuleType.Room;
+		//if (type == ModuleType.Corridor)
+		//{
+		//	if (_numberOfConsecutiveCorridors >= _maximumNumberOfConsecutiveCorridors)
+		//	{
+		//		_numberOfConsecutiveCorridors = 0;
+		//		return ModuleType.Room;
+		//	}
 
-			if (Random.Range(0, 2) % 2 == 0)
+		//	if (Random.Range(0, 2) % 2 == 0)
+		//	{
+		//		_numberOfConsecutiveCorridors = 0;
+		//		return ModuleType.Room;
+		//	}
+		//}
+
+		//_numberOfConsecutiveCorridors++;
+		//return ModuleType.Corridor;
+	}
+	private void OnDungeonCreated()
+	{
+		TrimCorridors();
+		CloseOpenExits();
+	}
+	private void TrimCorridors()
+	{
+		for (var i = _modules.Count - 1; i > 0; i--)
+		{
+			var module = _modules[i];
+			if (module.Type == ModuleType.Corridor)
 			{
-				_numberOfConsecutiveCorridors = 0;
-				return ModuleType.Room;
+				if (ModuleIsOpenCorridor(module))
+				{
+					_modules.Remove(module);
+					Destroy(module.gameObject);
+				}
+			}
+		}
+	}
+	private bool ModuleIsOpenCorridor(Module module)
+	{
+		if (module.Type == ModuleType.Corridor)
+		{
+			var exits = module.GetExits();
+			for (var i = 0; i < exits.Count; i++)
+			{
+				if (exits[i].Open)
+				{
+					return true;
+				}
 			}
 		}
 
-		_numberOfConsecutiveCorridors++;
-		return ModuleType.Corridor;
+		return false;
+	}
+	private void CloseOpenExits()
+	{
+
 	}
 }
