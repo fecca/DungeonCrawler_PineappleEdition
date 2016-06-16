@@ -159,13 +159,10 @@ public class DungeonHandler : MonoBehaviour
 		for (var i = _modules.Count - 1; i > 0; i--)
 		{
 			var module = _modules[i];
-			if (module.Type == ModuleType.Corridor)
+			if (ModuleIsOpenCorridor(module))
 			{
-				if (ModuleIsOpenCorridor(module))
-				{
-					_modules.Remove(module);
-					Destroy(module.gameObject);
-				}
+				_modules.Remove(module);
+				Destroy(module.gameObject);
 			}
 		}
 	}
