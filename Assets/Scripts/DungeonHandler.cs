@@ -1,108 +1,148 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DungeonHandler : MonoBehaviour
 {
-	public List<GameObject> RoomPrefabs = new List<GameObject>();
-	public List<GameObject> CorridorPrefabs = new List<GameObject>();
 	public int NumberOfModules = 100;
 
+	private ModuleHandler _moduleHandler;
+	private GameObject _containerGameObject;
 	private List<Module> _modules;
 	private List<Bounds> _boundsList;
+	private Module _exitRoom;
+
+	public Module StartingRoom
+	{
+		get
+		{
+			if (_modules.Count > 0)
+			{
+				return _modules[0];
+			}
+
+			throw new ArgumentException("No rooms to start in.");
+		}
+	}
+	public Module ExitRoom
+	{
+		get
+		{
+			if (_exitRoom != null)
+			{
+				return _exitRoom;
+			}
+
+			throw new NotImplementedException("No exit room set.");
+		}
+	}
 
 	private void Awake()
 	{
 		_modules = new List<Module>();
 		_boundsList = new List<Bounds>();
+		_containerGameObject = new GameObject("Dungeon");
 	}
 
-	public void CreateDungeon()
+	public void CreateDungeon(ModuleHandler moduleHandler)
 	{
+		_moduleHandler = moduleHandler;
+
+		ClearDungeon();
+
 		var modulesToIterate = new List<Module>();
-		var containerGameObject = new GameObject("Dungeon");
+		var numberOfModulesCreated = 0;
 
-		// Create first module
-		var gameObject = Instantiate(GetRandomModulePrefabOfType(ModuleType.Room));
-		var firstModule = gameObject.GetComponent<Module>();
-		firstModule.transform.parent = containerGameObject.transform;
+		var firstModule = _moduleHandler.CreateModule(ModuleType.Room);
+		_boundsList.Add(_moduleHandler.GetModuleBounds(firstModule));
+
+		modulesToIterate.Insert(0, firstModule);
+		firstModule.transform.SetParent(_containerGameObject.transform);
+		firstModule.gameObject.name = "Start";
 		_modules.Add(firstModule);
-		_boundsList.Add(GetModuleBounds(gameObject));
-		modulesToIterate.Add(firstModule);
+		numberOfModulesCreated++;
 
-		for (var moduleIndex = 0; moduleIndex < NumberOfModules; moduleIndex++)
+		while (modulesToIterate.Count > 0)
 		{
-			var module = modulesToIterate.GetRandomElement();
-			if (module == null)
+			var module = modulesToIterate[0];
+			Exit exit = null;
+			var newModule = TryAddingNewModule(module, out exit);
+			if (newModule == null)
+			{
+				modulesToIterate.RemoveAt(0);
+				continue;
+			}
+
+			module.AddLinkTo(newModule);
+			newModule.AddLinkFrom(module, exit);
+
+			modulesToIterate.Insert(0, newModule);
+			newModule.transform.SetParent(_containerGameObject.transform);
+			newModule.gameObject.name = "Module" + numberOfModulesCreated;
+			_modules.Add(newModule);
+			numberOfModulesCreated++;
+
+			if (numberOfModulesCreated > NumberOfModules)
 			{
 				break;
 			}
-
-			var exits = module.GetExits();
-			for (var exitIndex = 0; exitIndex < exits.Count; exitIndex++)
-			{
-				// Skip closed exits
-				var moduleExit = exits[exitIndex];
-				if (!moduleExit.Open)
-				{
-					continue;
-				}
-
-				var retries = 0;
-				while (retries < 1)
-				{
-					// Create room and find exits
-					var newType = GetRandomModuleType(module.Type);
-					var newGameObject = Instantiate(GetRandomModulePrefabOfType(newType));
-					var newModule = newGameObject.GetComponent<Module>();
-					var newModuleExit = newModule.GetExits().GetRandomElement();
-					newModuleExit.gameObject.SnapTo(moduleExit.gameObject);
-					var newModuleBounds = GetModuleBounds(newGameObject);
-
-					// Check intersection
-					if (!BoundsIntersect(newModuleBounds))
-					{
-						newModule.transform.parent = containerGameObject.transform;
-						_modules.Add(newModule);
-						_boundsList.Add(newModuleBounds);
-						modulesToIterate.Add(newModule);
-						newModuleExit.Open = false;
-						moduleExit.Open = false;
-
-						break;
-					}
-
-					// Destroy intersecting room and go to next loop
-					Destroy(newGameObject);
-					retries++;
-				}
-			}
-			modulesToIterate.Remove(module);
 		}
 
+		TrimCorridors();
+		CloseOpenExits();
 		OnDungeonCreated();
 	}
-	public Vector3 GetStartingPosition()
+
+	private void ClearDungeon()
 	{
-		if (_modules.Count > 0)
+		var dungeonModules = _containerGameObject.GetComponentsInChildren<Module>();
+		for (var i = 0; i < dungeonModules.Length; i++)
 		{
-			return _modules[0].transform.position;
+			Destroy(dungeonModules[i].gameObject);
 		}
 
-		return Vector3.zero;
+		_modules.Clear();
+		_boundsList.Clear();
+
 	}
-
-	private Bounds GetModuleBounds(GameObject gameObject)
+	private Module TryAddingNewModule(Module module, out Exit e)
 	{
-		var bounds = new Bounds(gameObject.transform.position, Vector3.one);
-		var colliders = gameObject.GetComponentsInChildren<Collider>();
-		for (var i = 0; i < colliders.Length; i++)
+		e = null;
+		var exits = module.GetOpenExits();
+		for (var i = 0; i < exits.Count; i++)
 		{
-			bounds.Encapsulate(colliders[i].bounds);
-		}
-		bounds.size *= 0.95f;
+			var exit = exits[i];
+			if (!exit.Open)
+			{
+				continue;
+			}
 
-		return bounds;
+			var newModule = _moduleHandler.CreateRandomModule(module.Type);
+			var newModuleOpenExits = newModule.GetOpenExits();
+			if (newModuleOpenExits.Count <= 0)
+			{
+				continue;
+			}
+
+			var newModuleExit = newModuleOpenExits.GetRandomElement();
+			newModuleExit.gameObject.SnapTo(exit.gameObject);
+
+			var newModuleBounds = _moduleHandler.GetModuleBounds(newModule);
+			if (BoundsIntersect(newModuleBounds))
+			{
+				Destroy(newModule.gameObject);
+				continue;
+			}
+
+			e = exit;
+			exit.Open = false;
+			newModuleExit.Open = false;
+			_boundsList.Add(newModuleBounds);
+
+			return newModule;
+		}
+
+		return null;
 	}
 	private bool BoundsIntersect(Bounds objectBounds)
 	{
@@ -116,74 +156,63 @@ public class DungeonHandler : MonoBehaviour
 
 		return false;
 	}
-	private GameObject GetRandomModulePrefabOfType(ModuleType type)
-	{
-		switch (type)
-		{
-			case ModuleType.Room:
-				return RoomPrefabs.GetRandomElement();
-			case ModuleType.Corridor:
-				return CorridorPrefabs.GetRandomElement();
-			default:
-				throw new System.NotSupportedException("Module type not supported");
-		}
-	}
-	private ModuleType GetRandomModuleType(ModuleType type)
-	{
-		return type == ModuleType.Room ? ModuleType.Corridor : ModuleType.Room;
-		//if (type == ModuleType.Corridor)
-		//{
-		//	if (_numberOfConsecutiveCorridors >= _maximumNumberOfConsecutiveCorridors)
-		//	{
-		//		_numberOfConsecutiveCorridors = 0;
-		//		return ModuleType.Room;
-		//	}
-
-		//	if (Random.Range(0, 2) % 2 == 0)
-		//	{
-		//		_numberOfConsecutiveCorridors = 0;
-		//		return ModuleType.Room;
-		//	}
-		//}
-
-		//_numberOfConsecutiveCorridors++;
-		//return ModuleType.Corridor;
-	}
-	private void OnDungeonCreated()
-	{
-		TrimCorridors();
-		CloseOpenExits();
-	}
 	private void TrimCorridors()
 	{
 		for (var i = _modules.Count - 1; i > 0; i--)
 		{
 			var module = _modules[i];
-			if (ModuleIsOpenCorridor(module))
+			if (module.Type == ModuleType.Corridor)
 			{
-				_modules.Remove(module);
-				Destroy(module.gameObject);
-			}
-		}
-	}
-	private bool ModuleIsOpenCorridor(Module module)
-	{
-		if (module.Type == ModuleType.Corridor)
-		{
-			var exits = module.GetExits();
-			for (var i = 0; i < exits.Count; i++)
-			{
-				if (exits[i].Open)
+				if (module.GetOpenExits().Count > 0)
 				{
-					return true;
+					DestroyModule(module);
 				}
 			}
 		}
-
-		return false;
 	}
 	private void CloseOpenExits()
 	{
 
+	}
+	private void OnDungeonCreated()
+	{
+		Debug.Log("Dungeon created with " + _modules.Count + " modules.");
+
+		FindExit();
+	}
+	private void DestroyModule(Module module)
+	{
+		// Remove links to this module
+		var linkFrom = module.GetLinkFrom();
+		linkFrom.Module.RemoveLinkTo(module);
+		linkFrom.Exit.Open = true;
+
+		// Remove link to this module
+		var linksTo = module.GetLinksTo();
+		for (var j = 0; j < linksTo.Count; j++)
+		{
+			var link = linksTo[j];
+			link.RemoveLinkFrom(module);
+		}
+
+		_modules.Remove(module);
+		Destroy(module.gameObject);
+	}
+	private void FindExit()
+	{
+		var distanceFromStartingRoom = 0;
+		for (var i = 0; i < _modules.Count; i++)
+		{
+			var module = _modules[i];
+			if (module.GetLinksTo().Count <= 0)
+			{
+				var distance = Vector3.Distance(StartingRoom.transform.position, module.transform.position);
+				if (distance > distanceFromStartingRoom)
+				{
+					_exitRoom = module;
+				}
+			}
+		}
+		_exitRoom.gameObject.name = "Exit";
 	}
 }
