@@ -20,3 +20,7 @@ Improve algorithm
 2016-06-18
 ----------
 Top down?
+
+2016-06-19
+----------
+Hide walls, or make them transparent, between player and camera

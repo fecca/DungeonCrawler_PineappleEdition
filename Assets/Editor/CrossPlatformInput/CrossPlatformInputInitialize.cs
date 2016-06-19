@@ -35,13 +35,13 @@ namespace UnityStandardAssets.CrossPlatformInput.Inspector
                 case BuildTarget.WP8Player:
                 case BuildTarget.PSM: 
                 case BuildTarget.WSAPlayer:
-                    EditorUtility.DisplayDialog("Mobile Input",
+					UnityEditor.EditorUtility.DisplayDialog("Mobile Input",
                                                 "You have enabled Mobile Input. You'll need to use the Unity Remote app on a connected device to control your game in the Editor.",
                                                 "OK");
                     break;
 
                 default:
-                    EditorUtility.DisplayDialog("Mobile Input",
+					UnityEditor.EditorUtility.DisplayDialog("Mobile Input",
                                                 "You have enabled Mobile Input, but you have a non-mobile build target selected in your build settings. The mobile control rigs won't be active or visible on-screen until you switch the build target to a mobile platform.",
                                                 "OK");
                     break;
@@ -66,7 +66,7 @@ namespace UnityStandardAssets.CrossPlatformInput.Inspector
                 case BuildTarget.Android:
                 case BuildTarget.iOS:
                 case BuildTarget.WP8Player:
-                    EditorUtility.DisplayDialog("Mobile Input",
+					UnityEditor.EditorUtility.DisplayDialog("Mobile Input",
                                                 "You have disabled Mobile Input. Mobile control rigs won't be visible, and the Cross Platform Input functions will always return standalone controls.",
                                                 "OK");
                     break;
