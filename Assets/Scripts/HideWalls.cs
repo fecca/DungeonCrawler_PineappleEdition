@@ -29,17 +29,18 @@ public class HideWalls : MonoBehaviour
 			var currentHit = hits[i].transform;
 			if (!_hiddenObjects.Contains(currentHit))
 			{
-				_hiddenObjects.Add(currentHit);
 				currentHit.GetComponent<Renderer>().material = TransparentMaterial;
+				_hiddenObjects.Add(currentHit);
 			}
 		}
 
 		for (var i = _hiddenObjects.Count - 1; i >= 0; i--)
 		{
+			var hiddenObject = _hiddenObjects[i];
 			var isHit = false;
 			for (var j = 0; j < hits.Length; j++)
 			{
-				if (hits[j].transform == _hiddenObjects[i])
+				if (hits[j].transform == hiddenObject)
 				{
 					isHit = true;
 					break;
@@ -48,9 +49,8 @@ public class HideWalls : MonoBehaviour
 
 			if (!isHit)
 			{
-				var wasHidden = _hiddenObjects[i];
-				wasHidden.GetComponent<Renderer>().material = NormalMaterial;
-				_hiddenObjects.RemoveAt(i);
+				hiddenObject.GetComponent<Renderer>().material = NormalMaterial;
+				_hiddenObjects.Remove(hiddenObject);
 			}
 		}
 	}
