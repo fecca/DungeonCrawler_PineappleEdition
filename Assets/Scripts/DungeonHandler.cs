@@ -65,16 +65,13 @@ public class DungeonHandler : MonoBehaviour
 		while (modulesToIterate.Count > 0)
 		{
 			var module = modulesToIterate[0];
-			Exit exit = null;
-			var newModule = TryAddingNewModule(module, out exit);
+
+			var newModule = TryAddingNewModule(module);
 			if (newModule == null)
 			{
 				modulesToIterate.RemoveAt(0);
 				continue;
 			}
-
-			module.AddLinkTo(newModule);
-			newModule.AddLinkFrom(module, exit);
 
 			modulesToIterate.Insert(0, newModule);
 			newModule.transform.SetParent(_containerGameObject.transform);
@@ -105,9 +102,8 @@ public class DungeonHandler : MonoBehaviour
 		_boundsList.Clear();
 
 	}
-	private Module TryAddingNewModule(Module module, out Exit e)
+	private Module TryAddingNewModule(Module module)
 	{
-		e = null;
 		var exits = module.GetOpenExits();
 		for (var i = 0; i < exits.Count; i++)
 		{
@@ -134,9 +130,9 @@ public class DungeonHandler : MonoBehaviour
 				continue;
 			}
 
-			e = exit;
-			exit.Open = false;
-			newModuleExit.Open = false;
+			module.AddLeadsTo(newModule, newModuleExit);
+			newModule.AddCameFrom(module, exit);
+
 			_boundsList.Add(newModuleBounds);
 
 			return newModule;
@@ -183,16 +179,16 @@ public class DungeonHandler : MonoBehaviour
 	private void DestroyModule(Module module)
 	{
 		// Remove links to this module
-		var linkFrom = module.GetLinkFrom();
-		linkFrom.Module.RemoveLinkTo(module);
-		linkFrom.Exit.Open = true;
+		var cameFrom = module.GetCameFrom();
+		cameFrom.Module.RemoveLeadsTo(module);
+		cameFrom.Exit.Open = true;
 
 		// Remove link to this module
-		var linksTo = module.GetLinksTo();
-		for (var j = 0; j < linksTo.Count; j++)
+		var leadsTo = module.GetLeadsTo();
+		for (var j = 0; j < leadsTo.Count; j++)
 		{
-			var link = linksTo[j];
-			link.RemoveLinkFrom(module);
+			var link = leadsTo[j];
+			link.Module.RemoveCameFrom(module);
 		}
 
 		_modules.Remove(module);
@@ -204,7 +200,7 @@ public class DungeonHandler : MonoBehaviour
 		for (var i = 0; i < _modules.Count; i++)
 		{
 			var module = _modules[i];
-			if (module.GetLinksTo().Count <= 0)
+			if (module.GetLeadsTo().Count <= 0)
 			{
 				var distance = Vector3.Distance(StartingRoom.transform.position, module.transform.position);
 				if (distance > distanceFromStartingRoom)

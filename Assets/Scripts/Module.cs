@@ -13,13 +13,13 @@ public class Module : MonoBehaviour
 	public ModuleType Type;
 
 	private List<Exit> _exits;
-	private List<Module> _linksTo;
-	private ModuleExit _linkFrom;
+	private List<ModuleExit> _leadsTo;
+	private ModuleExit _cameFrom;
 
 	private void Awake()
 	{
 		_exits = GetComponentsInChildren<Exit>().ToList();
-		_linksTo = new List<Module>();
+		_leadsTo = new List<ModuleExit>();
 	}
 
 	public List<Exit> GetExits()
@@ -40,32 +40,47 @@ public class Module : MonoBehaviour
 
 		return tmpList;
 	}
-	public void AddLinkTo(Module module)
+	public void AddLeadsTo(Module module, Exit exit)
 	{
-		_linksTo.Add(module);
+		exit.Open = false;
+		_leadsTo.Add(new ModuleExit()
+		{
+			Module = module,
+			Exit = exit
+		});
 	}
-	public void AddLinkFrom(Module module, Exit exit)
+	public void AddCameFrom(Module module, Exit exit)
 	{
-		_linkFrom = new ModuleExit()
+		exit.Open = false;
+		_cameFrom = new ModuleExit()
 		{
 			Module = module,
 			Exit = exit
 		};
 	}
-	public void RemoveLinkTo(Module module)
+	public void RemoveLeadsTo(Module module)
 	{
-		_linksTo.Remove(module);
+		for (int i = 0; i < _leadsTo.Count; i++)
+		{
+			var link = _leadsTo[i];
+			if (link.Module == module)
+			{
+				link.Exit.Open = true;
+				_leadsTo.Remove(link);
+				break;
+			}
+		}
 	}
-	public void RemoveLinkFrom(Module module)
+	public void RemoveCameFrom(Module module)
 	{
-		_linksTo.Remove(module);
+		_cameFrom = null;
 	}
-	public List<Module> GetLinksTo()
+	public List<ModuleExit> GetLeadsTo()
 	{
-		return new List<Module>(_linksTo);
+		return new List<ModuleExit>(_leadsTo);
 	}
-	public ModuleExit GetLinkFrom()
+	public ModuleExit GetCameFrom()
 	{
-		return _linkFrom;
+		return _cameFrom;
 	}
 }
