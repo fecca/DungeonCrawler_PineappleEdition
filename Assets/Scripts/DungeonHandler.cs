@@ -11,6 +11,10 @@ public class DungeonHandler : MonoBehaviour
 	private List<Module> _modules;
 	private List<Bounds> _boundsList;
 	private Module _exitRoom;
+	private float _cullingTimer;
+
+	private const float CullingTime = 1.0f;
+	private const int CullingDistance = 50;
 
 	public Module StartingRoom
 	{
@@ -42,6 +46,23 @@ public class DungeonHandler : MonoBehaviour
 		_modules = new List<Module>();
 		_boundsList = new List<Bounds>();
 		_containerGameObject = new GameObject("Dungeon");
+	}
+	private void Update()
+	{
+		if (_cullingTimer > CullingTime)
+		{
+			_cullingTimer = 0;
+
+			if (Game.PlayerTransform != null)
+			{
+				for (var i = 0; i < _modules.Count; i++)
+				{
+					var withinDistance = Vector3.Distance(_modules[i].transform.position, Game.PlayerTransform.position) < CullingDistance;
+					_modules[i].gameObject.SetActive(withinDistance);
+				}
+			}
+		}
+		_cullingTimer += Time.deltaTime;
 	}
 
 	public void CreateDungeon(ModuleHandler moduleHandler)

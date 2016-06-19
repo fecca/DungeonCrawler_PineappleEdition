@@ -1,0 +1,18 @@
+﻿X	Close open modules
+X	Top down?
+X	Hide walls, or make them transparent, between player and camera
+X	Cull modules
+X	Add light sources/torches
+
+... Improve algorithm
+	- Main path
+	- X amount of modules not following the path
+... Add more modules
+
+Add purpose
+Add items
+Add weapons/attacks
+Add AI/monsters
+Add UI
+Add inventory
+Optimize lighting and draw calls

@@ -7,6 +7,8 @@ public class Game : MonoBehaviour
 	public DungeonHandler DungeonHandler;
 	public GameObject DudePrefab;
 
+	public static Transform PlayerTransform { get; set; }
+
 	private void Start()
 	{
 		DungeonHandler.CreateDungeon(ModuleHandler);
@@ -26,5 +28,7 @@ public class Game : MonoBehaviour
 	{
 		var dude = Instantiate(DudePrefab);
 		dude.transform.position = DungeonHandler.StartingRoom.transform.position;
+
+		PlayerTransform = dude.transform;
 	}
 }
