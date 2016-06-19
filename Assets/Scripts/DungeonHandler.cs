@@ -154,7 +154,7 @@ public class DungeonHandler : MonoBehaviour
 	}
 	private void TrimCorridors()
 	{
-		for (var i = _modules.Count - 1; i > 0; i--)
+		for (var i = _modules.Count - 1; i >= 0; i--)
 		{
 			var module = _modules[i];
 			if (module.Type == ModuleType.Corridor)
