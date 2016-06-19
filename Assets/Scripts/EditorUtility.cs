@@ -46,9 +46,6 @@ public class EditorUtility : Editor
 			{
 				DestroyImmediate(m.gameObject);
 			}
-
-			AssetDatabase.CreateAsset(obj.GetComponent<MeshFilter>().sharedMesh, Application.dataPath + "/mesh.obj");
-			AssetDatabase.SaveAssets();
 		}
 	}
 
