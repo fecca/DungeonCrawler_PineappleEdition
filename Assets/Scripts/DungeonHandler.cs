@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class DungeonHandler : MonoBehaviour
 {
+	public bool CullModules;
+	public int CullingDistance = 50;
 	public int NumberOfModules = 100;
 
 	private ModuleHandler _moduleHandler;
@@ -14,7 +16,6 @@ public class DungeonHandler : MonoBehaviour
 	private float _cullingTimer;
 
 	private const float CullingTime = 1.0f;
-	private const int CullingDistance = 50;
 
 	public Module StartingRoom
 	{
@@ -49,20 +50,23 @@ public class DungeonHandler : MonoBehaviour
 	}
 	private void Update()
 	{
-		if (_cullingTimer > CullingTime)
+		if (CullModules)
 		{
-			_cullingTimer = 0;
-
-			if (Game.PlayerTransform != null)
+			if (_cullingTimer > CullingTime)
 			{
-				for (var i = 0; i < _modules.Count; i++)
+				_cullingTimer = 0;
+
+				if (Game.PlayerTransform != null)
 				{
-					var withinDistance = Vector3.Distance(_modules[i].transform.position, Game.PlayerTransform.position) < CullingDistance;
-					_modules[i].gameObject.SetActive(withinDistance);
+					for (var i = 0; i < _modules.Count; i++)
+					{
+						var withinDistance = Vector3.Distance(_modules[i].transform.position, Game.PlayerTransform.position) < CullingDistance;
+						_modules[i].gameObject.SetActive(withinDistance);
+					}
 				}
 			}
+			_cullingTimer += Time.deltaTime;
 		}
-		_cullingTimer += Time.deltaTime;
 	}
 
 	public void CreateDungeon(ModuleHandler moduleHandler)
@@ -218,6 +222,7 @@ public class DungeonHandler : MonoBehaviour
 	private void FindExit()
 	{
 		var distanceFromStartingRoom = 0;
+		_exitRoom = StartingRoom;
 		for (var i = 0; i < _modules.Count; i++)
 		{
 			var module = _modules[i];
