@@ -2,9 +2,11 @@
 
 public class Game : MonoBehaviour
 {
+	public bool Horror;
 	public ModuleHandler ModuleHandler;
 	public DungeonHandler DungeonHandler;
-	public GameObject DudePrefab;
+	public GameObject ThirdPersonDudePrefab;
+	public GameObject FirstPersonDudePrefab;
 
 	public static Transform PlayerTransform { get; set; }
 
@@ -21,9 +23,17 @@ public class Game : MonoBehaviour
 	}
 	private void CreateDude()
 	{
-		var dude = Instantiate(DudePrefab);
-		dude.transform.position = DungeonHandler.StartingRoom.transform.position;
+		GameObject dude = null;
+		if (Horror)
+		{
+			dude = Instantiate(FirstPersonDudePrefab);
+		}
+		else
+		{
+			dude = Instantiate(ThirdPersonDudePrefab);
+		}
 
+		dude.transform.position = DungeonHandler.StartingRoom.transform.position;
 		PlayerTransform = dude.transform;
 	}
 }
