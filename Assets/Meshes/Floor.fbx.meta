@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: f3a6cbfa5f4828b44a2304125d08e5de
-timeCreated: 1466593718
+guid: e09fbb7bfafe0124faf02116430f3f50
+timeCreated: 1466616514
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
@@ -9,7 +9,7 @@ ModelImporter:
     400000: //RootNode
     2300000: //RootNode
     3300000: //RootNode
-    4300000: Floor
+    4300000: Cylinder.001
   materials:
     importMaterials: 1
     materialName: 0

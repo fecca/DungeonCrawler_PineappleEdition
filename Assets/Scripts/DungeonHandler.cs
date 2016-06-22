@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,11 +10,11 @@ public class DungeonHandler : MonoBehaviour
 	public int NumberOfModules = 100;
 
 	private ModuleHandler _moduleHandler;
-	private GameObject _containerGameObject;
 	private List<Module> _modules;
-	private List<Bounds> _boundsList;
+	private GameObject _containerGameObject;
 	private Module _exitRoom;
 	private float _cullingTimer;
+	private int _numberOfModulesCreated = 0;
 
 	private const float CullingTime = 1.0f;
 
@@ -45,7 +46,6 @@ public class DungeonHandler : MonoBehaviour
 	private void Awake()
 	{
 		_modules = new List<Module>();
-		_boundsList = new List<Bounds>();
 		_containerGameObject = new GameObject("Dungeon");
 	}
 	private void Update()
@@ -76,22 +76,59 @@ public class DungeonHandler : MonoBehaviour
 		ClearDungeon();
 
 		var modulesToIterate = new List<Module>();
-		var numberOfModulesCreated = 0;
 
 		var firstModule = _moduleHandler.CreateModule(ModuleType.Room);
-		_boundsList.Add(_moduleHandler.GetModuleBounds(firstModule));
 
 		modulesToIterate.Insert(0, firstModule);
 		firstModule.transform.SetParent(_containerGameObject.transform);
 		firstModule.gameObject.name = "Start";
 		_modules.Add(firstModule);
-		numberOfModulesCreated++;
+		_numberOfModulesCreated++;
 
+		StartCoroutine(CreateModules(modulesToIterate));
+	}
+
+	private IEnumerator CreateModules(List<Module> modulesToIterate)
+	{
 		while (modulesToIterate.Count > 0)
 		{
 			var module = modulesToIterate[0];
 
-			var newModule = TryAddingNewModule(module);
+			Module newModule = null;
+			var exits = module.GetOpenExits();
+			for (var i = 0; i < exits.Count; i++)
+			{
+				var exit = exits[i];
+				if (!exit.Open)
+				{
+					continue;
+				}
+
+				var tmpModule = _moduleHandler.CreateRandomModule(module.Type);
+				var newModuleOpenExits = tmpModule.GetOpenExits();
+				if (newModuleOpenExits.Count <= 0)
+				{
+					continue;
+				}
+
+				var newModuleExit = newModuleOpenExits.GetRandomElement();
+				newModuleExit.gameObject.SnapTo(exit.gameObject);
+
+				yield return new WaitForSeconds(0.1f);
+
+				if (tmpModule.IsColliding)
+				{
+					Destroy(tmpModule.gameObject);
+					continue;
+				}
+
+				module.AddLeadsTo(tmpModule, newModuleExit);
+				tmpModule.AddCameFrom(module, exit);
+
+				newModule = tmpModule;
+				break;
+			}
+
 			if (newModule == null)
 			{
 				modulesToIterate.RemoveAt(0);
@@ -100,21 +137,21 @@ public class DungeonHandler : MonoBehaviour
 
 			modulesToIterate.Insert(0, newModule);
 			newModule.transform.SetParent(_containerGameObject.transform);
-			newModule.gameObject.name = "Module" + numberOfModulesCreated;
+			newModule.gameObject.name = "Module" + _numberOfModulesCreated;
 			_modules.Add(newModule);
-			numberOfModulesCreated++;
+			_numberOfModulesCreated++;
 
-			if (numberOfModulesCreated > NumberOfModules)
+			if (_numberOfModulesCreated > NumberOfModules)
 			{
 				break;
 			}
 		}
 
 		TrimCorridors();
-		CloseOpenExits();
-		OnDungeonCreated();
-	}
+		FindExit();
 
+		MessageHub.Instance.Publish(new DungeonCreatedMessage(null));
+	}
 	private void ClearDungeon()
 	{
 		var dungeonModules = _containerGameObject.GetComponentsInChildren<Module>();
@@ -124,58 +161,6 @@ public class DungeonHandler : MonoBehaviour
 		}
 
 		_modules.Clear();
-		_boundsList.Clear();
-
-	}
-	private Module TryAddingNewModule(Module module)
-	{
-		var exits = module.GetOpenExits();
-		for (var i = 0; i < exits.Count; i++)
-		{
-			var exit = exits[i];
-			if (!exit.Open)
-			{
-				continue;
-			}
-
-			var newModule = _moduleHandler.CreateRandomModule(module.Type);
-			var newModuleOpenExits = newModule.GetOpenExits();
-			if (newModuleOpenExits.Count <= 0)
-			{
-				continue;
-			}
-
-			var newModuleExit = newModuleOpenExits.GetRandomElement();
-			newModuleExit.gameObject.SnapTo(exit.gameObject);
-
-			var newModuleBounds = _moduleHandler.GetModuleBounds(newModule);
-			if (BoundsIntersect(newModuleBounds))
-			{
-				Destroy(newModule.gameObject);
-				continue;
-			}
-
-			module.AddLeadsTo(newModule, newModuleExit);
-			newModule.AddCameFrom(module, exit);
-
-			_boundsList.Add(newModuleBounds);
-
-			return newModule;
-		}
-
-		return null;
-	}
-	private bool BoundsIntersect(Bounds objectBounds)
-	{
-		for (var i = 0; i < _boundsList.Count; i++)
-		{
-			if (objectBounds.Intersects(_boundsList[i]))
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 	private void TrimCorridors()
 	{
@@ -190,16 +175,6 @@ public class DungeonHandler : MonoBehaviour
 				}
 			}
 		}
-	}
-	private void CloseOpenExits()
-	{
-
-	}
-	private void OnDungeonCreated()
-	{
-		Debug.Log("Dungeon created with " + _modules.Count + " modules.");
-
-		FindExit();
 	}
 	private void DestroyModule(Module module)
 	{

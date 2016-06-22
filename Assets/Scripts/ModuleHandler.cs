@@ -41,7 +41,7 @@ public class ModuleHandler : MonoBehaviour
 		{
 			bounds.Encapsulate(colliders[i].bounds);
 		}
-		bounds.size *= 0.95f;
+		bounds.size *= 0.9f;
 
 		return bounds;
 	}

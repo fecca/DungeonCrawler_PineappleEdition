@@ -16,10 +16,16 @@ public class Module : MonoBehaviour
 	private List<ModuleExit> _leadsTo;
 	private ModuleExit _cameFrom;
 
+	public bool IsColliding { get; set; }
+
 	private void Awake()
 	{
 		_exits = GetComponentsInChildren<Exit>().ToList();
 		_leadsTo = new List<ModuleExit>();
+	}
+	public void OnCollisionEnter(Collision collision)
+	{
+		IsColliding = true;
 	}
 
 	public List<Exit> GetExits()
