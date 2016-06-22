@@ -1,37 +1,15 @@
 fileFormatVersion: 2
 guid: 78dd4211ce12dd54d8c6ac5753807665
-timeCreated: 1466593116
+timeCreated: 1466593718
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
-    100000: CylinderWalls
-    100002: Floor
-    100004: Wall_1u
-    100006: Wall_2u
-    100008: //RootNode
-    100010: Wall_Door_1u
-    400000: CylinderWalls
-    400002: Floor
-    400004: Wall_1u
-    400006: Wall_2u
-    400008: //RootNode
-    400010: Wall_Door_1u
-    2300000: CylinderWalls
-    2300002: Floor
-    2300004: Wall_1u
-    2300006: Wall_2u
-    2300008: Wall_Door_1u
-    3300000: CylinderWalls
-    3300002: Floor
-    3300004: Wall_1u
-    3300006: Wall_2u
-    3300008: Wall_Door_1u
-    4300000: Wall_2u
-    4300002: Wall_Door_1u
-    4300004: Wall_1u
-    4300006: Floor
-    4300008: CylinderWalls
+    100000: //RootNode
+    400000: //RootNode
+    2300000: //RootNode
+    3300000: //RootNode
+    4300000: Wall_Door_1u
   materials:
     importMaterials: 1
     materialName: 0

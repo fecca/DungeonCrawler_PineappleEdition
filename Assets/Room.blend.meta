@@ -8,15 +8,35 @@ ModelImporter:
     100000: CylinderWalls
     100002: Floor
     100004: //RootNode
+    100006: CylinderWalls_001
+    100008: Wall_1u
+    100010: Wall_2u
+    100012: Wall_Door_1u
     400000: CylinderWalls
     400002: Floor
     400004: //RootNode
+    400006: CylinderWalls_001
+    400008: Wall_1u
+    400010: Wall_2u
+    400012: Wall_Door_1u
     2300000: CylinderWalls
     2300002: Floor
+    2300004: CylinderWalls_001
+    2300006: Wall_1u
+    2300008: Wall_2u
+    2300010: Wall_Door_1u
     3300000: CylinderWalls
     3300002: Floor
+    3300004: CylinderWalls_001
+    3300006: Wall_1u
+    3300008: Wall_2u
+    3300010: Wall_Door_1u
     4300000: Floor
     4300002: CylinderWalls
+    4300004: Wall_2u
+    4300006: Wall_Door_1u
+    4300008: Wall_1u
+    4300010: CylinderWalls_001
     7400000: Default Take
     9500000: //RootNode
   materials:
