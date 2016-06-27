@@ -114,7 +114,7 @@ public class DungeonHandler : MonoBehaviour
 				var newModuleExit = newModuleOpenExits.GetRandomElement();
 				newModuleExit.gameObject.SnapTo(exit.gameObject);
 
-				yield return new WaitForSeconds(0.1f);
+				yield return new WaitForFixedUpdate();
 
 				if (tmpModule.IsColliding)
 				{

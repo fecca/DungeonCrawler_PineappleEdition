@@ -7,7 +7,6 @@ X	Add light sources/torches
 ... Improve algorithm
 	- Main path
 	- X amount of modules not following the path
-... Add more modules
 
 Add purpose
 Add items
@@ -16,5 +15,7 @@ Add AI/monsters
 Add UI
 Add inventory
 Optimize lighting and draw calls
-
-!Circular rooms with segments added and rotated runtime!
+UV-map modules
+Build more modules
+Spawn rooms with random doors in random places
+Add spawn points in modules with list of items/obstacles/objects
