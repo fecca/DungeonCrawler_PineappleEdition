@@ -1,6 +1,5 @@
 ﻿X	Close open modules
 X	Top down?
-X	Hide walls, or make them transparent, between player and camera
 X	Cull modules
 X	Add light sources/torches
 
@@ -8,6 +7,7 @@ X	Add light sources/torches
 	- Main path
 	- X amount of modules not following the path
 
+Hide walls, or make them transparent, between player and camera
 Add purpose
 Add items
 Add weapons/attacks
@@ -19,3 +19,4 @@ UV-map modules
 Build more modules
 Spawn rooms with random doors in random places
 Add spawn points in modules with list of items/obstacles/objects
+Bake light
