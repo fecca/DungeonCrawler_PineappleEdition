@@ -1,46 +1,39 @@
 ﻿using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CharacterController))]
 public class DudeController : MonoBehaviour
 {
 	public float Speed = 5.0f;
 	public float RotationSpeed = 5.0f;
-	public float MaxSpeed = 20.0f;
+	public float Gravity = 5.0f;
+	public float JumpSpeed = 8.0F;
+	public float StrafeSpeed = 0.5F;
 
-	private Rigidbody _rigidbody;
+	private CharacterController _controller;
+	private Vector3 _moveDirection = Vector3.zero;
 
 	private void Awake()
 	{
-		_rigidbody = GetComponent<Rigidbody>();
+		_controller = GetComponent<CharacterController>();
 	}
 	private void Update()
 	{
-		if (Input.GetKey(KeyCode.W))
-		{
-			if (_rigidbody.velocity.z > MaxSpeed)
-			{
-				return;
-			}
+		transform.Rotate(new Vector3(0, Input.GetAxis("Mouse X"), 0), Space.World);
 
-			_rigidbody.AddForce(transform.forward * Time.deltaTime * Speed, ForceMode.Impulse);
-		}
-		if (Input.GetKey(KeyCode.A))
+		if (_controller.isGrounded)
 		{
-			transform.Rotate(-Vector3.up * Time.deltaTime * RotationSpeed);
-		}
-		if (Input.GetKey(KeyCode.S))
-		{
-			if (_rigidbody.velocity.z > MaxSpeed)
-			{
-				return;
-			}
+			var strafeSpeed = Input.GetAxis("Horizontal") * StrafeSpeed;
+			_moveDirection = new Vector3(strafeSpeed, 0, Input.GetAxis("Vertical"));
+			_moveDirection = transform.TransformDirection(_moveDirection);
+			_moveDirection *= Speed;
 
-			_rigidbody.AddForce(-transform.forward * Time.deltaTime * Speed);
+			if (Input.GetButton("Jump"))
+			{
+				_moveDirection.y = JumpSpeed;
+			}
 		}
-		if (Input.GetKey(KeyCode.D))
-		{
-			transform.Rotate(Vector3.up * Time.deltaTime * RotationSpeed);
-		}
+		_moveDirection.y -= Gravity * Time.deltaTime;
+		_controller.Move(_moveDirection * Time.deltaTime);
 	}
 	private void OnDrawGizmos()
 	{
