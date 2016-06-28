@@ -20,3 +20,4 @@ Build more modules
 Spawn rooms with random doors in random places
 Add spawn points in modules with list of items/obstacles/objects
 Bake light
+Close off un-used doors
