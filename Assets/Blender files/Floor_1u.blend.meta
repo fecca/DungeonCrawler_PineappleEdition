@@ -19,10 +19,12 @@ ModelImporter:
     2300002: Cone_001
     2300004: Cylinder
     2300006: Icosphere
+    2300008: //RootNode
     3300000: Cone
     3300002: Cone_001
     3300004: Cylinder
     3300006: Icosphere
+    3300008: //RootNode
     4300000: Icosphere
     4300002: Cone_001
     4300004: Cone

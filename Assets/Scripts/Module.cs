@@ -11,6 +11,8 @@ public class ModuleExit
 public class Module : MonoBehaviour
 {
 	public ModuleType Type;
+	public GameObject GenerationColliders;
+	public GameObject GameColliders;
 
 	private List<Exit> _exits;
 	private List<ModuleExit> _leadsTo;
@@ -23,7 +25,7 @@ public class Module : MonoBehaviour
 		_exits = GetComponentsInChildren<Exit>().ToList();
 		_leadsTo = new List<ModuleExit>();
 	}
-	public void OnCollisionEnter(Collision collision)
+	public void OnTriggerEnter(Collider collider)
 	{
 		IsColliding = true;
 	}
@@ -88,5 +90,10 @@ public class Module : MonoBehaviour
 	public ModuleExit GetCameFrom()
 	{
 		return _cameFrom;
+	}
+	public void EnableGameColliders()
+	{
+		GenerationColliders.SetActive(false);
+		GameColliders.SetActive(true);
 	}
 }

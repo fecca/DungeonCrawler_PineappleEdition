@@ -147,13 +147,13 @@ public class DungeonHandler : MonoBehaviour
 			}
 		}
 
-		DisableConvexColliders();
+		OptimizeColliders();
 		TrimCorridors();
 		FindExit();
 
 		MessageHub.Instance.Publish(new DungeonCreatedMessage(null));
 	}
-	private void DisableConvexColliders()
+	private void OptimizeColliders()
 	{
 		for (var i = 0; i < _modules.Count; i++)
 		{
@@ -162,11 +162,7 @@ public class DungeonHandler : MonoBehaviour
 			var rigidbody = module.GetComponent<Rigidbody>();
 			rigidbody.isKinematic = true;
 
-			var colliders = module.GetComponentsInChildren<MeshCollider>();
-			for (var j = 0; j < colliders.Length; j++)
-			{
-				colliders[j].convex = false;
-			}
+			module.EnableGameColliders();
 		}
 	}
 	private void ClearDungeon()

@@ -33,7 +33,7 @@ public class Game : MonoBehaviour
 			dude = Instantiate(ThirdPersonDudePrefab);
 		}
 
-		dude.transform.position = DungeonHandler.StartingRoom.transform.position;
+		dude.transform.position = DungeonHandler.StartingRoom.transform.position + Vector3.up;
 		PlayerTransform = dude.transform;
 	}
 }
