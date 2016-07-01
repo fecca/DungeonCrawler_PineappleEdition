@@ -12,28 +12,6 @@ public class DudeController : MonoBehaviour
 	private CharacterController _controller;
 	private Vector3 _moveDirection = Vector3.zero;
 
-	public int NumberOfObjectsToSpawn = 10;
-	public List<GameObject> WorldObjects = new List<GameObject>();
-	private List<GameObject> SpawnedObjects = new List<GameObject>();
-	public void OnTriggerEnter(Collider collider)
-	{
-		for (var i = 0; i < NumberOfObjectsToSpawn; i++)
-		{
-			var gameObjectToSpawn = WorldObjects[Random.Range(0, WorldObjects.Count)];
-			var newObject = Instantiate(gameObjectToSpawn);
-			SpawnedObjects.Add(newObject);
-		}
-	}
-	public void OnTriggerExit(Collider collider)
-	{
-		for (var i = SpawnedObjects.Count - 1; i >= 0; i--)
-		{
-			var objectToDestroy = SpawnedObjects[i];
-			SpawnedObjects.Remoce(objectToDestroy);
-			Destroy(objectToDestroy);
-		}
-	}
-
 	private void Awake()
 	{
 		_controller = GetComponent<CharacterController>();
@@ -56,9 +34,5 @@ public class DudeController : MonoBehaviour
 		}
 		_moveDirection.y -= Gravity * Time.deltaTime;
 		_controller.Move(_moveDirection * Time.deltaTime);
-	}
-	private void OnDrawGizmos()
-	{
-		Gizmos.DrawLine(transform.position, transform.position + transform.forward);
 	}
 }
