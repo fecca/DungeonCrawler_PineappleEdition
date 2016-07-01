@@ -22,19 +22,18 @@ public class RoomFactory
 	{
 		var vertices = new List<Vector3>();
 		var triangles = new List<int>();
-		var floorVertices = new Vector3[numberOfCorners + 1];
 
-		// Origin
-		vertices.Add(position);
-
-		GenerateFloorVertices(position, numberOfCorners, radius, ref vertices, ref floorVertices);
-		SetTriangleIndices(floorVertices.Length, ref triangles);
+		GenerateVertices(position, numberOfCorners, radius, thickness, ref vertices);
+		GenerateTriangles(numberOfCorners, vertices.Count, ref triangles);
 
 		return CompleteGameObject(vertices, triangles);
 	}
 
-	private void GenerateFloorVertices(Vector3 position, int numberOfCorners, int radius, ref List<Vector3> vertices, ref Vector3[] floorVertices)
+	private void GenerateVertices(Vector3 position, int numberOfCorners, int radius, int thickness, ref List<Vector3> vertices)
 	{
+		// Origin
+		vertices.Add(position);
+
 		var angle = Random.Range(0f, 360f);
 		var angleStep = 360f / numberOfCorners;
 		for (var i = 0; i < numberOfCorners; i++)
@@ -43,22 +42,51 @@ public class RoomFactory
 			var modifiedRadius = radius * Random.Range(0.8f, 1.2f);
 			var x = Mathf.Sin(Mathf.Deg2Rad * modifiedAngle) * modifiedRadius;
 			var z = Mathf.Cos(Mathf.Deg2Rad * modifiedAngle) * modifiedRadius;
-			var vertexPosition = new Vector3(x, position.y, z);
-			vertexPosition += position;
-			floorVertices[i] = vertexPosition;
-			vertices.Add(vertexPosition);
+			var floorVertexPosition = new Vector3(x, position.y, z);
+			floorVertexPosition += position;
+
+			var heading = floorVertexPosition - position;
+			var distance = heading.magnitude;
+			var direction = heading / distance;
+			var floorThicknessVertexPosition = floorVertexPosition + heading.normalized;
+
+			vertices.Add(floorVertexPosition);
+			vertices.Add(floorThicknessVertexPosition);
+
 			angle += 360f / numberOfCorners;
 		}
 	}
-	private void SetTriangleIndices(int numberOfFloorVertices, ref List<int> triangles)
+	private void GenerateTriangles(int numberOfCorners, int numberOfVertices, ref List<int> triangles)
 	{
-		for (var i = 1; i <= numberOfFloorVertices; i++)
+		var groupStep = (numberOfVertices - 1) / numberOfCorners;
+		for (var i = 0; i < numberOfCorners; i++)
 		{
-			var thisIndex = i < numberOfFloorVertices ? i : 1;
-			var nextIndex = thisIndex < numberOfFloorVertices - 1 ? thisIndex + 1 : 1;
+			var thisIndex = i;
+			var thisGroup = (groupStep * thisIndex);
+			var thisCornerVertex = thisGroup + 0;
+			var thisCornerThicknessVertex = thisGroup + 1;
+
+			var nextIndex = (i < numberOfCorners - 1 ? i + 1 : 0);
+			var nextGroup = (groupStep * nextIndex);
+			var nextCornerVertex = nextGroup + 0;
+			var nextCornerThicknessVertex = nextGroup + 1;
+
+			// Floor
 			triangles.Add(0);
-			triangles.Add(thisIndex);
-			triangles.Add(nextIndex);
+			triangles.Add(thisCornerVertex + 1);
+			triangles.Add(nextCornerVertex + 1);
+
+			// Thickness
+			triangles.Add(thisCornerVertex + 1);
+			triangles.Add(thisCornerThicknessVertex + 1);
+			triangles.Add(nextCornerVertex + 1);
+
+			triangles.Add(thisCornerThicknessVertex + 1);
+			triangles.Add(nextCornerThicknessVertex + 1);
+			triangles.Add(nextCornerVertex + 1);
+
+			Debug.Log("#asdf# " + thisIndex + ", " + thisGroup + ", " + thisCornerVertex + ", " + thisCornerThicknessVertex);
+			Debug.Log("#asdf# " + nextIndex + ", " + nextGroup + ", " + nextCornerVertex + ", " + nextCornerThicknessVertex);
 		}
 	}
 	private GameObject CompleteGameObject(List<Vector3> vertices, List<int> triangles)
