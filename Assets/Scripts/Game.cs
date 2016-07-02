@@ -1,28 +1,20 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
-public enum RoomArea
-{
-	None,
-	Floor,
-	Wall,
-	All
-}
 public class Game : MonoBehaviour
 {
-	public GameObject Dude = null;
-	public RoomArea SharedVertices = RoomArea.None;
+	public GameObject DudePrefab = null;
 
-	public static Transform PlayerTransform { get; set; }
+	private List<GameObject> _dungeon;
 
 	private void Start()
 	{
-		var dungeon = DungeonFactory.Instance.CreateDungeon(SharedVertices);
-		CreateDude();
+		_dungeon = DungeonFactory.Instance.CreateDungeon();
+		//CreateDude();
 	}
 
 	private void CreateDude()
 	{
-		GameObject dude = Instantiate(Dude);
-		dude.transform.position = Vector3.zero;
+		GameObject dude = Instantiate(DudePrefab, Vector3.zero, DudePrefab.transform.rotation) as GameObject;
 	}
 }

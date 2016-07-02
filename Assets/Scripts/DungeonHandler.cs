@@ -50,23 +50,23 @@ public class DungeonHandler : MonoBehaviour
 	}
 	private void Update()
 	{
-		if (CullModules)
-		{
-			if (_cullingTimer > CullingTime)
-			{
-				_cullingTimer = 0;
+		//	if (CullModules)
+		//	{
+		//		if (_cullingTimer > CullingTime)
+		//		{
+		//			_cullingTimer = 0;
 
-				if (Game.PlayerTransform != null)
-				{
-					for (var i = 0; i < _modules.Count; i++)
-					{
-						var withinDistance = Vector3.Distance(_modules[i].transform.position, Game.PlayerTransform.position) < CullingDistance;
-						_modules[i].gameObject.SetActive(withinDistance);
-					}
-				}
-			}
-			_cullingTimer += Time.deltaTime;
-		}
+		//			if (Game.PlayerTransform != null)
+		//			{
+		//				for (var i = 0; i < _modules.Count; i++)
+		//				{
+		//					var withinDistance = Vector3.Distance(_modules[i].transform.position, Game.PlayerTransform.position) < CullingDistance;
+		//					_modules[i].gameObject.SetActive(withinDistance);
+		//				}
+		//			}
+		//		}
+		//		_cullingTimer += Time.deltaTime;
+		//	}
 	}
 
 	public void CreateDungeon(ModuleHandler moduleHandler)

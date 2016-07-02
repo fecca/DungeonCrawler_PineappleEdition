@@ -24,6 +24,11 @@ public static class Extensions
 		newModule.transform.position += correctiveTranslation;
 	}
 
+	public static bool IsEmpty<T>(this ICollection<T> list)
+	{
+		return list.Count <= 0;
+	}
+
 	private static float Azimuth(Vector3 vector)
 	{
 		return Vector3.Angle(Vector3.forward, vector) * Mathf.Sign(vector.x);

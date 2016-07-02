@@ -18,11 +18,18 @@ public class DungeonFactory
 
 	private DungeonFactory() { }
 
-	public List<GameObject> CreateDungeon(RoomArea sharedVertices)
+	public List<GameObject> CreateDungeon()
 	{
-		RoomFactory.Instance.SetSharedVertices(sharedVertices);
+		var room = RoomFactory.Instance.CreateRoom(null, 19, 10, 1, 3);
+		var corridor = CorridorFactory.Instance.CreateCorridor(room.GetComponent<Room>());
+
+
+
+
+
 		var roomsList = new List<GameObject>()
 		{
+			//	roomGameObject,
 			//RoomFactory.Instance.CreateRoom(new Vector3(0, 0, 0), 3, 10, 1, 3),
 			//RoomFactory.Instance.CreateRoom(new Vector3(25, 0, 0), 5, 10, 1, 5),
 			//RoomFactory.Instance.CreateRoom(new Vector3(50, 0, 0), 7, 10, 1, 2),
@@ -31,7 +38,6 @@ public class DungeonFactory
 			//RoomFactory.Instance.CreateRoom(new Vector3(125, 0, 0), 13, 10, 1, 5),
 			//RoomFactory.Instance.CreateRoom(new Vector3(150, 0, 0), 15, 10, 1, 2),
 			//RoomFactory.Instance.CreateRoom(new Vector3(175, 0, 0), 17, 10, 1, 4),
-			RoomFactory.Instance.CreateRoom(new Vector3(200, 0, 0), 19, 10, 1, 3),
 
 			//RoomFactory.Instance.CreateRoom(new Vector3(0, 0, 25), 21, 10, 1, 4),
 			//RoomFactory.Instance.CreateRoom(new Vector3(25, 0, 25), 23, 10, 1, 4),

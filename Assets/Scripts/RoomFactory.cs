@@ -1,6 +1,18 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Temporary, for testing purposes
+/// Remove when no longer needed
+/// </summary>
+public enum RoomArea
+{
+	None,
+	Floor,
+	Wall,
+	All
+}
+
 public class RoomFactory
 {
 	private static RoomFactory _instance;
@@ -26,39 +38,49 @@ public class RoomFactory
 	private const float WallModifierIntervalMin = -0.5f;
 	private const float WallModifierIntervalMax = 0.5f;
 
+	private GameObject _gameObject;
+	private Vector3 _position = Vector3.zero;
+	private List<Vector3> _vertices;
+	private List<int> _triangles;
+	private List<Vector3> _exitVertices;
 	private RoomArea _sharedVertices;
 
-	public void SetSharedVertices(RoomArea sharedVertices)
+	public GameObject CreateRoom(Corridor corridor, int numberOfCorners, int radius, int thickness, int height)
 	{
-		_sharedVertices = sharedVertices;
-	}
-	public GameObject CreateRoom(Vector3 position, int numberOfCorners, int radius, int thickness, int height)
-	{
-		var vertices = GenerateVertices(position, numberOfCorners, radius, thickness, height);
+		if (corridor != null)
+		{
+			_position = corridor.transform.position;
+		}
+		// Clear data
+		_vertices = new List<Vector3>();
+		_triangles = new List<int>();
+		_exitVertices = new List<Vector3>();
 
-		List<int> triangles = new List<int>();
+		GenerateVertices(numberOfCorners, radius, thickness, height);
+
 		switch (_sharedVertices)
 		{
 			case RoomArea.None:
-				triangles = GenerateTrianglesWithUniqueVertices(numberOfCorners, ref vertices);
+				GenerateTrianglesWithUniqueVertices(numberOfCorners);
 				break;
 			case RoomArea.Floor:
-				triangles = GenerateTrianglesWithSharedFloorVertices(numberOfCorners, ref vertices);
+				GenerateTrianglesWithSharedFloorVertices(numberOfCorners);
 				break;
 			case RoomArea.Wall:
-				triangles = GenerateTrianglesWithSharedWallVertices(numberOfCorners, ref vertices);
+				GenerateTrianglesWithSharedWallVertices(numberOfCorners);
 				break;
 			case RoomArea.All:
-				triangles = GenerateTrianglesWithSharedVertices(numberOfCorners, ref vertices);
+				GenerateTrianglesWithSharedVertices(numberOfCorners);
 				break;
 		}
 
-		return CompleteGameObject(vertices, triangles);
+		CompleteGameObject();
+
+		return _gameObject;
 	}
 
-	private List<Vector3> GenerateVertices(Vector3 position, int numberOfCorners, int radius, int thickness, int height)
+	private void GenerateVertices(int numberOfCorners, int radius, int thickness, int height)
 	{
-		var vertices = new List<Vector3>();
 		var angle = Random.Range(0f, 360f);
 		var angleStep = 360f / numberOfCorners;
 		for (var i = 0; i < numberOfCorners; i++)
@@ -69,516 +91,525 @@ public class RoomFactory
 			var z = Mathf.Cos(Mathf.Deg2Rad * modifiedAngle) * modifiedRadius;
 
 			// Origo
-			vertices.Add(position);
+			_vertices.Add(_position);
 
 			// Floor vertex 1
-			var floorVertex1 = (new Vector3(x * 0.33f, position.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), z * 0.33f) + position);
-			vertices.Add(floorVertex1);
+			var floorVertex1 = (new Vector3(x * 0.33f, _position.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), z * 0.33f) + _position);
+			_vertices.Add(floorVertex1);
 
 			// Floor vertex 2
-			var floorVertex2 = (new Vector3(x * 0.66f, position.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), z * 0.66f) + position);
-			vertices.Add(floorVertex2);
+			var floorVertex2 = (new Vector3(x * 0.66f, _position.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), z * 0.66f) + _position);
+			_vertices.Add(floorVertex2);
 
 			// Corner vertex
-			var cornerVertex = new Vector3(x, position.y, z) + position;
-			vertices.Add(cornerVertex);
+			var cornerVertex = new Vector3(x, _position.y, z) + _position;
+			_vertices.Add(cornerVertex);
 
-			var directionNormalized = (cornerVertex - position).normalized;
+			var directionNormalized = (cornerVertex - _position).normalized;
 
 			// Wall vertex
 			var wallVertex = cornerVertex + (directionNormalized * Random.Range(WallModifierIntervalMin, WallModifierIntervalMax)) + (Vector3.up * height);
-			vertices.Add(wallVertex);
+			_vertices.Add(wallVertex);
 
-			// Extended wall vertex
-			var extendedWallVertex = wallVertex + directionNormalized + (directionNormalized * Random.Range(WallModifierIntervalMin, WallModifierIntervalMax));
-			vertices.Add(extendedWallVertex);
+			// Outside wall vertex
+			var outsideWallVertex = wallVertex + directionNormalized + (directionNormalized * Random.Range(WallModifierIntervalMin, WallModifierIntervalMax));
+			_vertices.Add(outsideWallVertex);
 
-			// Extended corner vertex
-			var extendedCornerVertex = directionNormalized + cornerVertex;
-			vertices.Add(extendedCornerVertex);
+			// Outside corner vertex
+			var outsideCornerVertex = directionNormalized + cornerVertex;
+			_vertices.Add(outsideCornerVertex);
 
 			angle += 360f / numberOfCorners;
 		}
-
-		return vertices;
 	}
-	private List<int> GenerateTrianglesWithUniqueVertices(int numberOfCorners, ref List<Vector3> vertices)
+	private void GenerateTrianglesWithUniqueVertices(int numberOfCorners)
 	{
-		var corridorVertices = new List<Vector3>();
 		var newVertices = new List<Vector3>();
-		var triangles = new List<int>();
-		var numberOfVerticesPerGroup = vertices.Count / numberOfCorners;
+		var newTriangles = new List<int>();
+		var numberOfVerticesPerGroup = _vertices.Count / numberOfCorners;
+
 		for (var i = 0; i < numberOfCorners; i++)
 		{
 			var thisGroup = (numberOfVerticesPerGroup * i);
-			var nextGroup = thisGroup + numberOfVerticesPerGroup >= vertices.Count ? 0 : thisGroup + numberOfVerticesPerGroup;
+			var nextGroup = thisGroup + numberOfVerticesPerGroup >= _vertices.Count ? 0 : thisGroup + numberOfVerticesPerGroup;
 
 			var thisOrigoVertex = thisGroup;
 			var thisFloorVertex1 = thisGroup + 1;
 			var thisFloorVertex2 = thisGroup + 2;
 			var thisCornerVertex = thisGroup + 3;
 			var thisWallVertex = thisGroup + 4;
-			var thisExtendedWallVertex = thisGroup + 5;
-			var thisExtendedCornerVertex = thisGroup + 6;
+			var thisOutsideWallVertex = thisGroup + 5;
+			var thisOutsideCornerVertex = thisGroup + 6;
 
 			var nextFloorVertex1 = nextGroup + 1;
 			var nextFloorVertex2 = nextGroup + 2;
 			var nextCornerVertex = nextGroup + 3;
 			var nextWallVertex = nextGroup + 4;
-			var nextExtendedWallVertex = nextGroup + 5;
-			var nextExtendedCornerVertex = nextGroup + 6;
+			var nextOutsideWallVertex = nextGroup + 5;
+			var nextOutsideCornerVertex = nextGroup + 6;
 
-			newVertices.Add(vertices[thisOrigoVertex]);
-			newVertices.Add(vertices[thisFloorVertex1]);
-			newVertices.Add(vertices[nextFloorVertex1]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// First floor triangle
+			newVertices.Add(_vertices[thisOrigoVertex]);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newVertices.Add(_vertices[nextFloorVertex1]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisFloorVertex1]);
-			newVertices.Add(vertices[thisFloorVertex2]);
-			newVertices.Add(vertices[nextFloorVertex2]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// Second floor triangle 1
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newVertices.Add(_vertices[thisFloorVertex2]);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextFloorVertex2]);
-			newVertices.Add(vertices[nextFloorVertex1]);
-			newVertices.Add(vertices[thisFloorVertex1]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// Second floor triangle 2
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newVertices.Add(_vertices[nextFloorVertex1]);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisCornerVertex]);
-			newVertices.Add(vertices[nextCornerVertex]);
-			newVertices.Add(vertices[nextFloorVertex2]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// Third floor triangle 1
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newVertices.Add(_vertices[nextCornerVertex]);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextFloorVertex2]);
-			newVertices.Add(vertices[thisFloorVertex2]);
-			newVertices.Add(vertices[thisCornerVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// Third floor triangle 2
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newVertices.Add(_vertices[thisFloorVertex2]);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			if (i == 3)
+			// Save vertices for exit and skip drawing wall
+			if (_exitVertices.IsEmpty())
 			{
-				corridorVertices.Add(vertices[thisCornerVertex]);
-				corridorVertices.Add(vertices[thisWallVertex]);
-				corridorVertices.Add(vertices[thisExtendedWallVertex]);
-				corridorVertices.Add(vertices[thisExtendedCornerVertex]);
-				corridorVertices.Add(vertices[nextCornerVertex]);
-				corridorVertices.Add(vertices[nextWallVertex]);
-				corridorVertices.Add(vertices[nextExtendedWallVertex]);
-				corridorVertices.Add(vertices[nextExtendedCornerVertex]);
+				_exitVertices.Add(_vertices[thisCornerVertex]);
+				_exitVertices.Add(_vertices[thisWallVertex]);
+				_exitVertices.Add(_vertices[thisOutsideWallVertex]);
+				_exitVertices.Add(_vertices[thisOutsideCornerVertex]);
+
+				_exitVertices.Add(_vertices[nextCornerVertex]);
+				_exitVertices.Add(_vertices[nextWallVertex]);
+				_exitVertices.Add(_vertices[nextOutsideWallVertex]);
+				_exitVertices.Add(_vertices[nextOutsideCornerVertex]);
+
 				continue;
 			}
 
-			newVertices.Add(vertices[thisCornerVertex]);
-			newVertices.Add(vertices[thisWallVertex]);
-			newVertices.Add(vertices[nextWallVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// First inside wall triangle 1
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextWallVertex]);
-			newVertices.Add(vertices[nextCornerVertex]);
-			newVertices.Add(vertices[thisCornerVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// First inside wall triangle 2
+			newVertices.Add(_vertices[nextWallVertex]);
+			newVertices.Add(_vertices[nextCornerVertex]);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisWallVertex]);
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// First roof triangle 1
+			newVertices.Add(_vertices[thisWallVertex]);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			newVertices.Add(vertices[nextWallVertex]);
-			newVertices.Add(vertices[thisWallVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// First roof triangle 2
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			newVertices.Add(vertices[thisExtendedCornerVertex]);
-			newVertices.Add(vertices[nextExtendedCornerVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// First outside wall triangle 1
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newVertices.Add(_vertices[thisOutsideCornerVertex]);
+			newVertices.Add(_vertices[nextOutsideCornerVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextExtendedCornerVertex]);
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			// First outside wall triangle 2
+			newVertices.Add(_vertices[nextOutsideCornerVertex]);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 		}
 
-		if (corridorVertices.Count > 0)
-		{
-			newVertices.Add(corridorVertices[0]);
-			newVertices.Add(corridorVertices[1]);
-			newVertices.Add(corridorVertices[2]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+		//if (corridorVertices.Count > 0)
+		//{
+		//	newVertices.Add(corridorVertices[0]);
+		//	newVertices.Add(corridorVertices[1]);
+		//	newVertices.Add(corridorVertices[2]);
+		//	triangles.Add(newVertices.Count - 3);
+		//	triangles.Add(newVertices.Count - 2);
+		//	triangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(corridorVertices[2]);
-			newVertices.Add(corridorVertices[3]);
-			newVertices.Add(corridorVertices[0]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+		//	newVertices.Add(corridorVertices[2]);
+		//	newVertices.Add(corridorVertices[3]);
+		//	newVertices.Add(corridorVertices[0]);
+		//	triangles.Add(newVertices.Count - 3);
+		//	triangles.Add(newVertices.Count - 2);
+		//	triangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(corridorVertices[0]);
-			newVertices.Add(corridorVertices[3]);
-			newVertices.Add(corridorVertices[7]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+		//	newVertices.Add(corridorVertices[0]);
+		//	newVertices.Add(corridorVertices[3]);
+		//	newVertices.Add(corridorVertices[7]);
+		//	triangles.Add(newVertices.Count - 3);
+		//	triangles.Add(newVertices.Count - 2);
+		//	triangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(corridorVertices[7]);
-			newVertices.Add(corridorVertices[4]);
-			newVertices.Add(corridorVertices[0]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+		//	newVertices.Add(corridorVertices[7]);
+		//	newVertices.Add(corridorVertices[4]);
+		//	newVertices.Add(corridorVertices[0]);
+		//	triangles.Add(newVertices.Count - 3);
+		//	triangles.Add(newVertices.Count - 2);
+		//	triangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(corridorVertices[4]);
-			newVertices.Add(corridorVertices[7]);
-			newVertices.Add(corridorVertices[6]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+		//	newVertices.Add(corridorVertices[4]);
+		//	newVertices.Add(corridorVertices[7]);
+		//	newVertices.Add(corridorVertices[6]);
+		//	triangles.Add(newVertices.Count - 3);
+		//	triangles.Add(newVertices.Count - 2);
+		//	triangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(corridorVertices[6]);
-			newVertices.Add(corridorVertices[5]);
-			newVertices.Add(corridorVertices[4]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-		}
+		//	newVertices.Add(corridorVertices[6]);
+		//	newVertices.Add(corridorVertices[5]);
+		//	newVertices.Add(corridorVertices[4]);
+		//	triangles.Add(newVertices.Count - 3);
+		//	triangles.Add(newVertices.Count - 2);
+		//	triangles.Add(newVertices.Count - 1);
+		//}
 
-		vertices = newVertices;
-
-		return triangles;
+		_vertices = newVertices;
+		_triangles = newTriangles;
 	}
-	private List<int> GenerateTrianglesWithSharedVertices(int numberOfCorners, ref List<Vector3> vertices)
+	private void GenerateTrianglesWithSharedVertices(int numberOfCorners)
 	{
 		var newVertices = new List<Vector3>();
-		var triangles = new List<int>();
-		var numberOfVerticesPerGroup = vertices.Count / numberOfCorners;
+		var newTriangles = new List<int>();
+		var numberOfVerticesPerGroup = _vertices.Count / numberOfCorners;
 		for (var i = 0; i < numberOfCorners; i++)
 		{
 			var thisGroup = (numberOfVerticesPerGroup * i);
-			var nextGroup = thisGroup + numberOfVerticesPerGroup >= vertices.Count ? 0 : thisGroup + numberOfVerticesPerGroup;
+			var nextGroup = thisGroup + numberOfVerticesPerGroup >= _vertices.Count ? 0 : thisGroup + numberOfVerticesPerGroup;
 
 			var thisOrigoVertex = thisGroup;
 			var thisFloorVertex1 = thisGroup + 1;
 			var thisFloorVertex2 = thisGroup + 2;
 			var thisCornerVertex = thisGroup + 3;
 			var thisWallVertex = thisGroup + 4;
-			var thisExtendedWallVertex = thisGroup + 5;
-			var thisExtendedCornerVertex = thisGroup + 6;
+			var thisOutsideWallVertex = thisGroup + 5;
+			var thisOutsideCornerVertex = thisGroup + 6;
 
 			var nextFloorVertex1 = nextGroup + 1;
 			var nextFloorVertex2 = nextGroup + 2;
 			var nextCornerVertex = nextGroup + 3;
 			var nextWallVertex = nextGroup + 4;
-			var nextExtendedWallVertex = nextGroup + 5;
-			var nextExtendedCornerVertex = nextGroup + 6;
+			var nextOutsideWallVertex = nextGroup + 5;
+			var nextOutsideCornerVertex = nextGroup + 6;
 
-			newVertices.Add(vertices[thisOrigoVertex]);
-			newVertices.Add(vertices[thisFloorVertex1]);
-			newVertices.Add(vertices[nextFloorVertex1]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[thisOrigoVertex]);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newVertices.Add(_vertices[nextFloorVertex1]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisFloorVertex1]);
-			newVertices.Add(vertices[thisFloorVertex2]);
-			newVertices.Add(vertices[nextFloorVertex2]);
-			newVertices.Add(vertices[nextFloorVertex1]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newVertices.Add(_vertices[thisFloorVertex2]);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newVertices.Add(_vertices[nextFloorVertex1]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 
-			newVertices.Add(vertices[thisCornerVertex]);
-			newVertices.Add(vertices[nextCornerVertex]);
-			newVertices.Add(vertices[nextFloorVertex2]);
-			newVertices.Add(vertices[thisFloorVertex2]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newVertices.Add(_vertices[nextCornerVertex]);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newVertices.Add(_vertices[thisFloorVertex2]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 
-			newVertices.Add(vertices[thisCornerVertex]);
-			newVertices.Add(vertices[thisWallVertex]);
-			newVertices.Add(vertices[nextWallVertex]);
-			newVertices.Add(vertices[nextCornerVertex]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newVertices.Add(_vertices[nextCornerVertex]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 
-			newVertices.Add(vertices[thisWallVertex]);
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			newVertices.Add(vertices[nextWallVertex]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			newVertices.Add(vertices[thisExtendedCornerVertex]);
-			newVertices.Add(vertices[nextExtendedCornerVertex]);
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newVertices.Add(_vertices[thisOutsideCornerVertex]);
+			newVertices.Add(_vertices[nextOutsideCornerVertex]);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 		}
 
-		vertices = newVertices;
-
-		return triangles;
+		_vertices = newVertices;
+		_triangles = newTriangles;
 	}
-	private List<int> GenerateTrianglesWithSharedWallVertices(int numberOfCorners, ref List<Vector3> vertices)
+	private void GenerateTrianglesWithSharedWallVertices(int numberOfCorners)
 	{
 		var newVertices = new List<Vector3>();
-		var triangles = new List<int>();
-		var numberOfVerticesPerGroup = vertices.Count / numberOfCorners;
+		var newTriangles = new List<int>();
+		var numberOfVerticesPerGroup = _vertices.Count / numberOfCorners;
 		for (var i = 0; i < numberOfCorners; i++)
 		{
 			var thisGroup = (numberOfVerticesPerGroup * i);
-			var nextGroup = thisGroup + numberOfVerticesPerGroup >= vertices.Count ? 0 : thisGroup + numberOfVerticesPerGroup;
+			var nextGroup = thisGroup + numberOfVerticesPerGroup >= _vertices.Count ? 0 : thisGroup + numberOfVerticesPerGroup;
 
 			var thisOrigoVertex = thisGroup;
 			var thisFloorVertex1 = thisGroup + 1;
 			var thisFloorVertex2 = thisGroup + 2;
 			var thisCornerVertex = thisGroup + 3;
 			var thisWallVertex = thisGroup + 4;
-			var thisExtendedWallVertex = thisGroup + 5;
-			var thisExtendedCornerVertex = thisGroup + 6;
+			var thisOutsideWallVertex = thisGroup + 5;
+			var thisOutsideCornerVertex = thisGroup + 6;
 
 			var nextFloorVertex1 = nextGroup + 1;
 			var nextFloorVertex2 = nextGroup + 2;
 			var nextCornerVertex = nextGroup + 3;
 			var nextWallVertex = nextGroup + 4;
-			var nextExtendedWallVertex = nextGroup + 5;
-			var nextExtendedCornerVertex = nextGroup + 6;
+			var nextOutsideWallVertex = nextGroup + 5;
+			var nextOutsideCornerVertex = nextGroup + 6;
 
-			newVertices.Add(vertices[thisOrigoVertex]);
-			newVertices.Add(vertices[thisFloorVertex1]);
-			newVertices.Add(vertices[nextFloorVertex1]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[thisOrigoVertex]);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newVertices.Add(_vertices[nextFloorVertex1]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisFloorVertex1]);
-			newVertices.Add(vertices[thisFloorVertex2]);
-			newVertices.Add(vertices[nextFloorVertex2]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newVertices.Add(_vertices[thisFloorVertex2]);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextFloorVertex2]);
-			newVertices.Add(vertices[nextFloorVertex1]);
-			newVertices.Add(vertices[thisFloorVertex1]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newVertices.Add(_vertices[nextFloorVertex1]);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisCornerVertex]);
-			newVertices.Add(vertices[nextCornerVertex]);
-			newVertices.Add(vertices[nextFloorVertex2]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newVertices.Add(_vertices[nextCornerVertex]);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextFloorVertex2]);
-			newVertices.Add(vertices[thisFloorVertex2]);
-			newVertices.Add(vertices[thisCornerVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newVertices.Add(_vertices[thisFloorVertex2]);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisCornerVertex]);
-			newVertices.Add(vertices[thisWallVertex]);
-			newVertices.Add(vertices[nextWallVertex]);
-			newVertices.Add(vertices[nextCornerVertex]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newVertices.Add(_vertices[nextCornerVertex]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 
-			newVertices.Add(vertices[thisWallVertex]);
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			newVertices.Add(vertices[nextWallVertex]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			newVertices.Add(vertices[thisExtendedCornerVertex]);
-			newVertices.Add(vertices[nextExtendedCornerVertex]);
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newVertices.Add(_vertices[thisOutsideCornerVertex]);
+			newVertices.Add(_vertices[nextOutsideCornerVertex]);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 		}
 
-		vertices = newVertices;
-
-		return triangles;
+		_vertices = newVertices;
+		_triangles = newTriangles;
 	}
-	private List<int> GenerateTrianglesWithSharedFloorVertices(int numberOfCorners, ref List<Vector3> vertices)
+	private void GenerateTrianglesWithSharedFloorVertices(int numberOfCorners)
 	{
 		var newVertices = new List<Vector3>();
-		var triangles = new List<int>();
-		var numberOfVerticesPerGroup = vertices.Count / numberOfCorners;
+		var newTriangles = new List<int>();
+		var numberOfVerticesPerGroup = _vertices.Count / numberOfCorners;
 		for (var i = 0; i < numberOfCorners; i++)
 		{
 			var thisGroup = (numberOfVerticesPerGroup * i);
-			var nextGroup = thisGroup + numberOfVerticesPerGroup >= vertices.Count ? 0 : thisGroup + numberOfVerticesPerGroup;
+			var nextGroup = thisGroup + numberOfVerticesPerGroup >= _vertices.Count ? 0 : thisGroup + numberOfVerticesPerGroup;
 
 			var thisOrigoVertex = thisGroup;
 			var thisFloorVertex1 = thisGroup + 1;
 			var thisFloorVertex2 = thisGroup + 2;
 			var thisCornerVertex = thisGroup + 3;
 			var thisWallVertex = thisGroup + 4;
-			var thisExtendedWallVertex = thisGroup + 5;
-			var thisExtendedCornerVertex = thisGroup + 6;
+			var thisOutsideWallVertex = thisGroup + 5;
+			var thisOutsideCornerVertex = thisGroup + 6;
 
 			var nextFloorVertex1 = nextGroup + 1;
 			var nextFloorVertex2 = nextGroup + 2;
 			var nextCornerVertex = nextGroup + 3;
 			var nextWallVertex = nextGroup + 4;
-			var nextExtendedWallVertex = nextGroup + 5;
-			var nextExtendedCornerVertex = nextGroup + 6;
+			var nextOutsideWallVertex = nextGroup + 5;
+			var nextOutsideCornerVertex = nextGroup + 6;
 
-			newVertices.Add(vertices[thisOrigoVertex]);
-			newVertices.Add(vertices[thisFloorVertex1]);
-			newVertices.Add(vertices[nextFloorVertex1]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[thisOrigoVertex]);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newVertices.Add(_vertices[nextFloorVertex1]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
 
-			newVertices.Add(vertices[thisFloorVertex1]);
-			newVertices.Add(vertices[thisFloorVertex2]);
-			newVertices.Add(vertices[nextFloorVertex2]);
-			newVertices.Add(vertices[nextFloorVertex1]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisFloorVertex1]);
+			newVertices.Add(_vertices[thisFloorVertex2]);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newVertices.Add(_vertices[nextFloorVertex1]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 
-			newVertices.Add(vertices[thisCornerVertex]);
-			newVertices.Add(vertices[nextCornerVertex]);
-			newVertices.Add(vertices[nextFloorVertex2]);
-			newVertices.Add(vertices[thisFloorVertex2]);
-			triangles.Add(newVertices.Count - 4);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
-			triangles.Add(newVertices.Count - 4);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newVertices.Add(_vertices[nextCornerVertex]);
+			newVertices.Add(_vertices[nextFloorVertex2]);
+			newVertices.Add(_vertices[thisFloorVertex2]);
+			newTriangles.Add(newVertices.Count - 4);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
+			newTriangles.Add(newVertices.Count - 4);
 
-			newVertices.Add(vertices[thisCornerVertex]);
-			newVertices.Add(vertices[thisWallVertex]);
-			newVertices.Add(vertices[nextWallVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextWallVertex]);
-			newVertices.Add(vertices[nextCornerVertex]);
-			newVertices.Add(vertices[thisCornerVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newVertices.Add(_vertices[nextCornerVertex]);
+			newVertices.Add(_vertices[thisCornerVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisWallVertex]);
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			newVertices.Add(vertices[nextWallVertex]);
-			newVertices.Add(vertices[thisWallVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newVertices.Add(_vertices[nextWallVertex]);
+			newVertices.Add(_vertices[thisWallVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			newVertices.Add(vertices[thisExtendedCornerVertex]);
-			newVertices.Add(vertices[nextExtendedCornerVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newVertices.Add(_vertices[thisOutsideCornerVertex]);
+			newVertices.Add(_vertices[nextOutsideCornerVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 
-			newVertices.Add(vertices[nextExtendedCornerVertex]);
-			newVertices.Add(vertices[nextExtendedWallVertex]);
-			newVertices.Add(vertices[thisExtendedWallVertex]);
-			triangles.Add(newVertices.Count - 3);
-			triangles.Add(newVertices.Count - 2);
-			triangles.Add(newVertices.Count - 1);
+			newVertices.Add(_vertices[nextOutsideCornerVertex]);
+			newVertices.Add(_vertices[nextOutsideWallVertex]);
+			newVertices.Add(_vertices[thisOutsideWallVertex]);
+			newTriangles.Add(newVertices.Count - 3);
+			newTriangles.Add(newVertices.Count - 2);
+			newTriangles.Add(newVertices.Count - 1);
 		}
 
-		vertices = newVertices;
-
-		return triangles;
+		_vertices = newVertices;
+		_triangles = newTriangles;
 	}
-	private GameObject CompleteGameObject(List<Vector3> vertices, List<int> triangles)
+	private void CompleteGameObject()
 	{
-		var newGameObject = new GameObject("Room");
+		_gameObject = new GameObject("Room");
+
+		var room = _gameObject.AddComponent<Room>();
+		room.AddExitVertices(_exitVertices);
 
 		var mesh = new Mesh();
-		mesh.vertices = vertices.ToArray();
-		mesh.triangles = triangles.ToArray();
+		mesh.vertices = _vertices.ToArray();
+		mesh.triangles = _triangles.ToArray();
 		mesh.RecalculateBounds();
 		mesh.RecalculateNormals();
 
-		var meshFilter = newGameObject.AddComponent<MeshFilter>();
+		var meshFilter = _gameObject.AddComponent<MeshFilter>();
 		meshFilter.mesh = mesh;
 
-		var meshRenderer = newGameObject.AddComponent<MeshRenderer>();
+		var meshRenderer = _gameObject.AddComponent<MeshRenderer>();
 		meshRenderer.material = Resources.Load<Material>("WallMaterial_Unlit");
 
-		var meshCollider = newGameObject.AddComponent<MeshCollider>();
+		var meshCollider = _gameObject.AddComponent<MeshCollider>();
 		meshCollider.sharedMesh = mesh;
-
-		return newGameObject;
 	}
 }
