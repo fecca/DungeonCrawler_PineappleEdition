@@ -33,10 +33,10 @@ public class ModuleFactory
 		var meshCollider = newGameObject.AddComponent<MeshCollider>();
 		meshCollider.sharedMesh = mesh;
 
-		var room = newGameObject.AddComponent<Module>();
-		room.AddExitVertices(exitVertices);
+		//var room = newGameObject.AddComponent<Module>();
+		//room.AddExitVertices(exitVertices);
 
-		return room;
+		return null;
 	}
 
 	//private void GenerateRoomTrianglesWithSharedVertices(int numberOfCorners)

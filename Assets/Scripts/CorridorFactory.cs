@@ -10,20 +10,26 @@ public class CorridorFactory : ModuleFactory
 		var triangles = new List<int>();
 		var exitVertices = new List<Vector3>();
 
-		var roomExitsVertices = room.GetExitVertices();
-
-		GenerateVertices(numberOfCorridorPieces, room.transform.position, roomExitsVertices, ref vertices);
+		GenerateVertices(room, numberOfCorridorPieces, ref vertices);
 		GenerateTrianglesWithUniqueVertices(numberOfCorridorPieces, ref vertices, ref triangles);
 
 		return CompleteGameObject(vertices, triangles, exitVertices);
 	}
 
-	private void GenerateVertices(int numberOfCorridorPieces, Vector3 roomPosition, List<Vector3> roomExitsVertices, ref List<Vector3> vertices)
+	private void GenerateVertices(Module room, int numberOfCorridorPieces, ref List<Vector3> vertices)
 	{
+		var roomExitsVertices = room.Model.ExitVertices;
+		var roomPosition = room.transform.position;
+
 		var leftWallVertex = roomExitsVertices[0];
 		var leftFloorVertex = roomExitsVertices[1];
 		var rightFloorVertex = roomExitsVertices[2];
 		var rightWallVertex = roomExitsVertices[3];
+
+		Debug.Log(leftWallVertex);
+		Debug.Log(leftFloorVertex);
+		Debug.Log(rightFloorVertex);
+		Debug.Log(rightWallVertex);
 
 		var forwardDirection = (Vector3.Lerp(leftFloorVertex, rightFloorVertex, 0.5f) - roomPosition).normalized;
 		var sidewaysDirection = (leftWallVertex - rightWallVertex).normalized;

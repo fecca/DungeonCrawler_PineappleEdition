@@ -8,11 +8,14 @@ public class RoomFactory : ModuleFactory
 		var newGameObject = new GameObject("Module");
 		newGameObject.transform.position = position;
 
+		var exitCorner = 0;
 		var vertices = GenerateVertices(position, numberOfCorners, radius, height, thickness);
+		var exitVertices = FindExitVertices(vertices, numberOfCorners, exitCorner);
 		var roomModel = new RoomModel(numberOfCorners, radius, height, thickness)
 		{
 			SharedVertices = vertices,
-			ExitCorners = new List<int>() { 0 }
+			ExitCorner = exitCorner,
+			ExitVertices = exitVertices
 		};
 
 		var room = newGameObject.AddComponent<Room>();
@@ -66,5 +69,18 @@ public class RoomFactory : ModuleFactory
 		}
 
 		return vertices;
+	}
+	private List<Vector3> FindExitVertices(List<Vector3> vertices, int numberOfCorners, int exitCorner)
+	{
+		var groupSize = (vertices.Count / numberOfCorners);
+		var thisExitGroup = groupSize * exitCorner;
+		var nextExitGroup = groupSize * (thisExitGroup >= numberOfCorners - 1 ? 0 : thisExitGroup + 1);
+		var tmpList = new List<Vector3>();
+		tmpList.Add(vertices[thisExitGroup + 5]);
+		tmpList.Add(vertices[thisExitGroup + 6]);
+		tmpList.Add(vertices[nextExitGroup + 6]);
+		tmpList.Add(vertices[nextExitGroup + 5]);
+
+		return tmpList;
 	}
 }

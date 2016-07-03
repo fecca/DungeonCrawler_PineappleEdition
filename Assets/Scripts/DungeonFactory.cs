@@ -19,9 +19,9 @@ public class DungeonFactory
 		{
 			var room = roomList[i];
 			room.CreateMesh();
-		}
 
-		//var corridor = _corridorFactory.CreateCorridor(room, 25);
+			var corridor = _corridorFactory.CreateCorridor(room, 10);
+		}
 
 		return new List<Module>()
 		{

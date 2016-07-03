@@ -90,7 +90,7 @@ public class Room : Module
 				newTriangles.Add(newVertices.Count - 1);
 			}
 
-			if (Model.ExitCorners.Contains(i))
+			if (Model.ExitCorner == i)
 			{
 				//// Save exit vertices
 				//exitVertices.Add(vertices[thisOutsideWallVertex]);
@@ -434,7 +434,7 @@ public class RoomModel
 	public List<Vector3> SharedVertices { get; set; }
 	public List<int> Triangles { get; set; }
 	public List<Vector3> ExitVertices { get; set; }
-	public List<int> ExitCorners { get; set; }
+	public int ExitCorner { get; set; }
 
 	public RoomModel(int numberOfCorners, int radius, int height, int thickness)
 	{
