@@ -5,11 +5,12 @@ public class Game : MonoBehaviour
 {
 	public GameObject DudePrefab = null;
 
-	private List<GameObject> _dungeon;
+	private List<Module> _dungeon;
+	private DungeonFactory _dungeonFactory = new DungeonFactory();
 
 	private void Start()
 	{
-		_dungeon = DungeonFactory.Instance.CreateDungeon();
+		_dungeon = _dungeonFactory.CreateDungeon();
 		//CreateDude();
 	}
 

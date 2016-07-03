@@ -3,22 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DungeonHandler : MonoBehaviour
+public class Old_DungeonHandler : MonoBehaviour
 {
 	public bool CullModules;
 	public int CullingDistance = 50;
 	public int NumberOfModules = 100;
 
-	private ModuleHandler _moduleHandler;
-	private List<Module> _modules;
+	private Old_ModuleHandler _moduleHandler;
+	private List<Old_Module> _modules;
 	private GameObject _containerGameObject;
-	private Module _exitRoom;
+	private Old_Module _exitRoom;
 	private float _cullingTimer;
 	private int _numberOfModulesCreated = 0;
 
 	private const float CullingTime = 1.0f;
 
-	public Module StartingRoom
+	public Old_Module StartingRoom
 	{
 		get
 		{
@@ -30,7 +30,7 @@ public class DungeonHandler : MonoBehaviour
 			throw new ArgumentException("No rooms to start in.");
 		}
 	}
-	public Module ExitRoom
+	public Old_Module ExitRoom
 	{
 		get
 		{
@@ -45,7 +45,7 @@ public class DungeonHandler : MonoBehaviour
 
 	private void Awake()
 	{
-		_modules = new List<Module>();
+		_modules = new List<Old_Module>();
 		_containerGameObject = new GameObject("Dungeon");
 	}
 	private void Update()
@@ -69,13 +69,13 @@ public class DungeonHandler : MonoBehaviour
 		//	}
 	}
 
-	public void CreateDungeon(ModuleHandler moduleHandler)
+	public void CreateDungeon(Old_ModuleHandler moduleHandler)
 	{
 		_moduleHandler = moduleHandler;
 
 		ClearDungeon();
 
-		var modulesToIterate = new List<Module>();
+		var modulesToIterate = new List<Old_Module>();
 
 		var firstModule = _moduleHandler.CreateModule(ModuleType.Room);
 
@@ -88,13 +88,13 @@ public class DungeonHandler : MonoBehaviour
 		StartCoroutine(CreateModules(modulesToIterate));
 	}
 
-	private IEnumerator CreateModules(List<Module> modulesToIterate)
+	private IEnumerator CreateModules(List<Old_Module> modulesToIterate)
 	{
 		while (modulesToIterate.Count > 0)
 		{
 			var module = modulesToIterate[0];
 
-			Module newModule = null;
+			Old_Module newModule = null;
 			var exits = module.GetOpenExits();
 			for (var i = 0; i < exits.Count; i++)
 			{
@@ -167,7 +167,7 @@ public class DungeonHandler : MonoBehaviour
 	}
 	private void ClearDungeon()
 	{
-		var dungeonModules = _containerGameObject.GetComponentsInChildren<Module>();
+		var dungeonModules = _containerGameObject.GetComponentsInChildren<Old_Module>();
 		for (var i = 0; i < dungeonModules.Length; i++)
 		{
 			Destroy(dungeonModules[i].gameObject);
@@ -189,7 +189,7 @@ public class DungeonHandler : MonoBehaviour
 			}
 		}
 	}
-	private void DestroyModule(Module module)
+	private void DestroyModule(Old_Module module)
 	{
 		// Remove links to this module
 		var cameFrom = module.GetCameFrom();

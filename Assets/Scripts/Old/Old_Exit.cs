@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Exit : MonoBehaviour
+public class Old_Exit : MonoBehaviour
 {
 	private bool _open = true;
 	public bool Open

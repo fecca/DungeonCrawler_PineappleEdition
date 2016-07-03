@@ -1,39 +1,39 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class ModuleHandler : MonoBehaviour
+public class Old_ModuleHandler : MonoBehaviour
 {
 	public List<GameObject> RoomPrefabs = new List<GameObject>();
 	public List<GameObject> CorridorPrefabs = new List<GameObject>();
 
-	public Module CreateRandomRoomModule()
+	public Old_Module CreateRandomRoomModule()
 	{
 		var gameObject = Instantiate(GetRandomModulePrefab(ModuleType.Room));
 
-		return gameObject.GetComponent<Module>();
+		return gameObject.GetComponent<Old_Module>();
 	}
-	public Module CreateRandomCorridorModule()
+	public Old_Module CreateRandomCorridorModule()
 	{
 		var gameObject = Instantiate(GetRandomModulePrefab(ModuleType.Corridor));
 
-		return gameObject.GetComponent<Module>();
+		return gameObject.GetComponent<Old_Module>();
 	}
-	public Module CreateModule(ModuleType moduleType)
+	public Old_Module CreateModule(ModuleType moduleType)
 	{
 		var gameObject = Instantiate(GetRandomModulePrefab(moduleType));
 
-		return gameObject.GetComponent<Module>();
+		return gameObject.GetComponent<Old_Module>();
 	}
-	public Module CreateRandomModule(ModuleType previousModuleType)
+	public Old_Module CreateRandomModule(ModuleType previousModuleType)
 	{
 		var randomModuleType = GetRandomModuleType(previousModuleType);
 		var randomModulePrefab = GetRandomModulePrefab(randomModuleType);
 		var gameObject = Instantiate(randomModulePrefab);
-		var module = gameObject.GetComponent<Module>();
+		var module = gameObject.GetComponent<Old_Module>();
 
 		return module;
 	}
-	public Bounds GetModuleBounds(Module module)
+	public Bounds GetModuleBounds(Old_Module module)
 	{
 		var bounds = new Bounds(module.transform.position, Vector3.one);
 		var colliders = module.GetComponentsInChildren<Collider>();
