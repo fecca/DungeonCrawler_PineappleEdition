@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class RoomFactory : ModuleFactory
 {
-	public Module CreateRoom(Module corridor, int numberOfCorners, int radius, int thickness, int height)
+	public Module CreateCircularRoom(int numberOfCorners, int radius, int thickness, int height)
 	{
 		// Clear data
 		var vertices = new List<Vector3>();
@@ -15,6 +15,7 @@ public class RoomFactory : ModuleFactory
 
 		return CompleteGameObject(vertices, triangles, exitVertices);
 	}
+
 	private void GenerateVertices(Vector3 position, int numberOfCorners, int radius, int thickness, int height, ref List<Vector3> vertices)
 	{
 		var angle = Random.Range(0f, 360f);

@@ -12,48 +12,73 @@ public class CorridorFactory : ModuleFactory
 
 		var roomExitsVertices = room.GetExitVertices();
 
-		var direction = (Vector3.Lerp(roomExitsVertices[1], roomExitsVertices[2], 0.5f) - room.transform.position).normalized;
-
-		GenerateVertices(numberOfCorridorPieces, direction, roomExitsVertices, ref vertices);
+		GenerateVertices(numberOfCorridorPieces, room.transform.position, roomExitsVertices, ref vertices);
 		GenerateTrianglesWithUniqueVertices(numberOfCorridorPieces, ref vertices, ref triangles);
 
 		return CompleteGameObject(vertices, triangles, exitVertices);
 	}
 
-	private void GenerateVertices(int numberOfCorridorPieces, Vector3 direction, List<Vector3> roomExitsVertices, ref List<Vector3> vertices)
+	private void GenerateVertices(int numberOfCorridorPieces, Vector3 roomPosition, List<Vector3> roomExitsVertices, ref List<Vector3> vertices)
 	{
 		var leftWallVertex = roomExitsVertices[0];
 		var leftFloorVertex = roomExitsVertices[1];
 		var rightFloorVertex = roomExitsVertices[2];
 		var rightWallVertex = roomExitsVertices[3];
+
+		var forwardDirection = (Vector3.Lerp(leftFloorVertex, rightFloorVertex, 0.5f) - roomPosition).normalized;
+		var sidewaysDirection = (leftWallVertex - rightWallVertex).normalized;
+		var corridorWidth = Vector3.Distance(leftFloorVertex, rightFloorVertex);
+		var corridorHeight = Vector3.Distance(leftFloorVertex, leftWallVertex);
+
+		var leftOutsideFloorVertex = leftFloorVertex;
+		var leftOutsideWallVertex = leftWallVertex;
+		var rightOutsideWallVertex = rightWallVertex;
+		var rightOutsideFloorVertex = rightFloorVertex;
+
+		vertices.Add(leftOutsideFloorVertex);
+		vertices.Add(leftOutsideWallVertex);
 		vertices.Add(leftWallVertex);
 		vertices.Add(leftFloorVertex);
 		vertices.Add(rightFloorVertex);
 		vertices.Add(rightWallVertex);
-
-		var corridorWidth = Vector3.Distance(leftFloorVertex, rightFloorVertex);
-		var corridorHeight = Vector3.Distance(leftFloorVertex, leftWallVertex);
+		vertices.Add(rightOutsideWallVertex);
+		vertices.Add(rightOutsideFloorVertex);
 
 		for (var i = 0; i < numberOfCorridorPieces; i++)
 		{
-			var randomYDirection = GetRandomDirectionY(direction.y);
-			var randomLeftDirection = new Vector3(GetRandomDirectionX(direction.x), randomYDirection, GetRandomDirectionZ(direction.z));
-			var randomRightDirection = new Vector3(GetRandomDirectionX(direction.x), randomYDirection, GetRandomDirectionZ(direction.z));
+			var randomXDirection = GetRandomDirectionX(forwardDirection.x);
+			var randomYDirection = GetRandomDirectionY(forwardDirection.y);
+			var randomZDirection = GetRandomDirectionZ(forwardDirection.z);
+			var randomLeftDirection = new Vector3(randomXDirection, randomYDirection, randomZDirection);
+			var randomRightDirection = new Vector3(randomXDirection, randomYDirection, randomZDirection);
 
 			var nextLeftFloorVertex = leftFloorVertex + (corridorWidth * randomLeftDirection);
 			var nextLeftWallVertex = new Vector3(nextLeftFloorVertex.x, nextLeftFloorVertex.y + corridorHeight, nextLeftFloorVertex.z);
 			var nextRightFloorVertex = rightFloorVertex + (corridorWidth * randomRightDirection);
 			var nextRightWallVertex = new Vector3(nextRightFloorVertex.x, nextRightFloorVertex.y + corridorHeight, nextRightFloorVertex.z);
 
+			var nextLeftOutsideFloorVertex = nextLeftFloorVertex + (sidewaysDirection * 1);
+			var nextLeftOutsideWallVertex = nextLeftWallVertex + (sidewaysDirection * 1);
+			var nextRightOutsideWallVertex = nextRightWallVertex - (sidewaysDirection * 1);
+			var nextRightOutsideFloorVertex = nextRightFloorVertex - (sidewaysDirection * 1);
+
+			vertices.Add(nextLeftOutsideFloorVertex);
+			vertices.Add(nextLeftOutsideWallVertex);
 			vertices.Add(nextLeftWallVertex);
 			vertices.Add(nextLeftFloorVertex);
 			vertices.Add(nextRightFloorVertex);
 			vertices.Add(nextRightWallVertex);
+			vertices.Add(nextRightOutsideWallVertex);
+			vertices.Add(nextRightOutsideFloorVertex);
 
+			leftOutsideFloorVertex = nextLeftOutsideFloorVertex;
+			leftOutsideWallVertex = nextLeftOutsideWallVertex;
 			leftWallVertex = nextLeftWallVertex;
 			leftFloorVertex = nextLeftFloorVertex;
 			rightFloorVertex = nextRightFloorVertex;
 			rightWallVertex = nextRightWallVertex;
+			rightOutsideWallVertex = nextRightOutsideWallVertex;
+			rightOutsideFloorVertex = nextRightOutsideFloorVertex;
 
 		}
 	}
@@ -68,15 +93,57 @@ public class CorridorFactory : ModuleFactory
 			var thisGroup = (numberOfVerticesPerGroup * i);
 			var nextGroup = thisGroup + numberOfVerticesPerGroup;
 
-			var thisLeftWallVertex = thisGroup;
-			var thisLeftFloorVertex = thisGroup + 1;
-			var thisRightFloorVertex = thisGroup + 2;
-			var thisRightWallVertex = thisGroup + 3;
+			var thisLeftOutsideFloorVertex = thisGroup;
+			var thisLeftOutsideWallVertex = thisGroup + 1;
+			var thisLeftWallVertex = thisGroup + 2;
+			var thisLeftFloorVertex = thisGroup + 3;
+			var thisRightFloorVertex = thisGroup + 4;
+			var thisRightWallVertex = thisGroup + 5;
+			var thisRightOutsideWallVertex = thisGroup + 6;
+			var thisRightOutsideFloorVertex = thisGroup + 7;
 
-			var nextLeftWallVertex = nextGroup;
-			var nextLeftFloorVertex = nextGroup + 1;
-			var nextRightFloorVertex = nextGroup + 2;
-			var nextRightWallVertex = nextGroup + 3;
+			var nextLeftOutsideFloorVertex = nextGroup;
+			var nextLeftOutsideWallVertex = nextGroup + 1;
+			var nextLeftWallVertex = nextGroup + 2;
+			var nextLeftFloorVertex = nextGroup + 3;
+			var nextRightFloorVertex = nextGroup + 4;
+			var nextRightWallVertex = nextGroup + 5;
+			var nextRightOutsideWallVertex = nextGroup + 6;
+			var nextRightOutsideFloorVertex = nextGroup + 7;
+
+			// Left outside wall
+			{
+				newVertices.Add(vertices[thisLeftOutsideFloorVertex]);
+				newVertices.Add(vertices[nextLeftOutsideFloorVertex]);
+				newVertices.Add(vertices[nextLeftOutsideWallVertex]);
+				newTriangles.Add(newVertices.Count - 3);
+				newTriangles.Add(newVertices.Count - 2);
+				newTriangles.Add(newVertices.Count - 1);
+
+				newVertices.Add(vertices[nextLeftOutsideWallVertex]);
+				newVertices.Add(vertices[thisLeftOutsideWallVertex]);
+				newVertices.Add(vertices[thisLeftOutsideFloorVertex]);
+				newTriangles.Add(newVertices.Count - 3);
+				newTriangles.Add(newVertices.Count - 2);
+				newTriangles.Add(newVertices.Count - 1);
+			}
+
+			// Left roof
+			{
+				newVertices.Add(vertices[thisLeftOutsideWallVertex]);
+				newVertices.Add(vertices[nextLeftOutsideWallVertex]);
+				newVertices.Add(vertices[nextLeftWallVertex]);
+				newTriangles.Add(newVertices.Count - 3);
+				newTriangles.Add(newVertices.Count - 2);
+				newTriangles.Add(newVertices.Count - 1);
+
+				newVertices.Add(vertices[nextLeftWallVertex]);
+				newVertices.Add(vertices[thisLeftWallVertex]);
+				newVertices.Add(vertices[thisLeftOutsideWallVertex]);
+				newTriangles.Add(newVertices.Count - 3);
+				newTriangles.Add(newVertices.Count - 2);
+				newTriangles.Add(newVertices.Count - 1);
+			}
 
 			// Left wall
 			{
@@ -129,39 +196,39 @@ public class CorridorFactory : ModuleFactory
 				newTriangles.Add(newVertices.Count - 1);
 			}
 
-			//// Left wall
-			//{
-			//	newVertices.Add(vertices[currentIndex + 0]);
-			//	newVertices.Add(vertices[currentIndex + 2]);
-			//	newVertices.Add(vertices[currentIndex + 3]);
-			//	newTriangles.Add(newVertices.Count - 3);
-			//	newTriangles.Add(newVertices.Count - 2);
-			//	newTriangles.Add(newVertices.Count - 1);
+			// Right roof
+			{
+				newVertices.Add(vertices[thisRightOutsideWallVertex]);
+				newVertices.Add(vertices[thisRightWallVertex]);
+				newVertices.Add(vertices[nextRightWallVertex]);
+				newTriangles.Add(newVertices.Count - 3);
+				newTriangles.Add(newVertices.Count - 2);
+				newTriangles.Add(newVertices.Count - 1);
 
-			//	newVertices.Add(vertices[currentIndex + 3]);
-			//	newVertices.Add(vertices[currentIndex + 1]);
-			//	newVertices.Add(vertices[currentIndex + 0]);
-			//	newTriangles.Add(newVertices.Count - 3);
-			//	newTriangles.Add(newVertices.Count - 2);
-			//	newTriangles.Add(newVertices.Count - 1);
-			//}
+				newVertices.Add(vertices[nextRightWallVertex]);
+				newVertices.Add(vertices[nextRightOutsideWallVertex]);
+				newVertices.Add(vertices[thisRightOutsideWallVertex]);
+				newTriangles.Add(newVertices.Count - 3);
+				newTriangles.Add(newVertices.Count - 2);
+				newTriangles.Add(newVertices.Count - 1);
+			}
 
-			//// Right wall
-			//{
-			//	newVertices.Add(vertices[currentIndex + 0]);
-			//	newVertices.Add(vertices[currentIndex + 2]);
-			//	newVertices.Add(vertices[currentIndex + 3]);
-			//	newTriangles.Add(newVertices.Count - 3);
-			//	newTriangles.Add(newVertices.Count - 2);
-			//	newTriangles.Add(newVertices.Count - 1);
+			// Right outside wall
+			{
+				newVertices.Add(vertices[thisRightOutsideFloorVertex]);
+				newVertices.Add(vertices[thisRightOutsideWallVertex]);
+				newVertices.Add(vertices[nextRightOutsideWallVertex]);
+				newTriangles.Add(newVertices.Count - 3);
+				newTriangles.Add(newVertices.Count - 2);
+				newTriangles.Add(newVertices.Count - 1);
 
-			//	newVertices.Add(vertices[currentIndex + 3]);
-			//	newVertices.Add(vertices[currentIndex + 1]);
-			//	newVertices.Add(vertices[currentIndex + 0]);
-			//	newTriangles.Add(newVertices.Count - 3);
-			//	newTriangles.Add(newVertices.Count - 2);
-			//	newTriangles.Add(newVertices.Count - 1);
-			//}
+				newVertices.Add(vertices[nextRightOutsideWallVertex]);
+				newVertices.Add(vertices[nextRightOutsideFloorVertex]);
+				newVertices.Add(vertices[thisRightOutsideFloorVertex]);
+				newTriangles.Add(newVertices.Count - 3);
+				newTriangles.Add(newVertices.Count - 2);
+				newTriangles.Add(newVertices.Count - 1);
+			}
 		}
 
 		vertices = newVertices;

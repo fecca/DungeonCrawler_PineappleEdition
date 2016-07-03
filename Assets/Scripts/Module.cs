@@ -15,3 +15,14 @@ public class Module : MonoBehaviour
 		return new List<Vector3>(_exits);
 	}
 }
+
+//public class CircularRoom
+//{
+//	private List<Vector3> _vertices = new List<Vector3>();
+//	private List<Vector3> _exitCorners = new List<Vector3>();
+
+//	public Vector3[] GetVertices()
+//	{
+//		return _vertices.ToArray();
+//	}
+//}
