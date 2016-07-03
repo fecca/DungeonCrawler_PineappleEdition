@@ -8,59 +8,23 @@ public class DungeonFactory
 
 	public List<Module> CreateDungeon()
 	{
-		//var moduleList = new List<Module>();
-		//for (var i = 0; i < 1; i++)
-		//{
-		//	moduleList.Add(_roomFactory.CreateCircularRoom(19, 10, 1, 3));
-		//}
+		var roomList = new List<Module>();
+		for (var i = 0; i < 1; i++)
+		{
+			var room = _roomFactory.CreateCircularRoom(Vector3.zero, 19, 10, 3, 1);
+			roomList.Add(room);
+		}
 
-		//for (var i = 0; i < moduleList.Count; i++)
-		//{
-		//	var module = moduleList[i];
-		//	CreateGameObject(module);
-		//}
+		for (var i = 0; i < roomList.Count; i++)
+		{
+			var room = roomList[i];
+			room.CreateMesh();
+		}
 
-
-
-
-		var room = _roomFactory.CreateCircularRoom(19, 10, 1, 3);
-		var corridor = _corridorFactory.CreateCorridor(room, 25);
-
-
-
-
-
-
-
-
-
-
+		//var corridor = _corridorFactory.CreateCorridor(room, 25);
 
 		return new List<Module>()
 		{
 		};
 	}
-
-	//private GameObject CreateGameObject(CircularRoom room)
-	//{
-	//	var newGameObject = new GameObject("Module");
-
-	//	var mesh = new Mesh();
-	//	mesh.vertices = room.GetVertices();
-	//	mesh.triangles = triangles.ToArray();
-	//	mesh.RecalculateBounds();
-	//	mesh.RecalculateNormals();
-
-	//	var meshFilter = newGameObject.AddComponent<MeshFilter>();
-	//	meshFilter.mesh = mesh;
-
-	//	var meshRenderer = newGameObject.AddComponent<MeshRenderer>();
-	//	meshRenderer.material = Resources.Load<Material>("WallMaterial_Unlit");
-
-	//	var meshCollider = newGameObject.AddComponent<MeshCollider>();
-	//	meshCollider.sharedMesh = mesh;
-
-	//	//var room = newGameObject.AddComponent<Module>();
-	//	//room.AddExitVertices(exitVertices);
-	//}
 }
