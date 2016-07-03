@@ -8,7 +8,7 @@ public class DungeonFactory
 	public List<Module> CreateDungeon()
 	{
 		var room = _roomFactory.CreateRoom(null, 19, 10, 1, 3);
-		var corridor = _corridorFactory.CreateCorridor(room);
+		var corridor = _corridorFactory.CreateCorridor(room, 25);
 
 		return new List<Module>()
 		{
