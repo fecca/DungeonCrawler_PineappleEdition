@@ -5,7 +5,7 @@ public class Game : MonoBehaviour
 {
 	public GameObject DudePrefab = null;
 
-	private List<Module> _dungeon;
+	private List<GameObject> _dungeon;
 	private DungeonFactory _dungeonFactory = new DungeonFactory();
 
 	private void Start()

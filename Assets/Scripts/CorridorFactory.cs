@@ -3,33 +3,25 @@ using UnityEngine;
 
 public class CorridorFactory : ModuleFactory
 {
-	public Module CreateCorridor(Module room, int numberOfCorridorPieces)
+	public GameObject CreateCorridor(RoomModel roomModel, int numberOfCorridorPieces)
 	{
-		// Clear data
-		var vertices = new List<Vector3>();
-		var triangles = new List<int>();
-		var exitVertices = new List<Vector3>();
+		var vertices = GenerateVertices(roomModel, numberOfCorridorPieces);
+		var triangles = GenerateTrianglesWithUniqueVertices(numberOfCorridorPieces, ref vertices);
 
-		GenerateVertices(room, numberOfCorridorPieces, ref vertices);
-		GenerateTrianglesWithUniqueVertices(numberOfCorridorPieces, ref vertices, ref triangles);
-
-		return CompleteGameObject(vertices, triangles, exitVertices);
+		return CompleteGameObject(vertices, triangles);
 	}
 
-	private void GenerateVertices(Module room, int numberOfCorridorPieces, ref List<Vector3> vertices)
+	private List<Vector3> GenerateVertices(RoomModel roomModel, int numberOfCorridorPieces)
 	{
-		var roomExitsVertices = room.Model.ExitVertices;
-		var roomPosition = room.transform.position;
+		var vertices = new List<Vector3>();
+
+		var roomExitsVertices = roomModel.ExitVertices;
+		var roomPosition = roomModel.Position;
 
 		var leftWallVertex = roomExitsVertices[0];
 		var leftFloorVertex = roomExitsVertices[1];
 		var rightFloorVertex = roomExitsVertices[2];
 		var rightWallVertex = roomExitsVertices[3];
-
-		Debug.Log(leftWallVertex);
-		Debug.Log(leftFloorVertex);
-		Debug.Log(rightFloorVertex);
-		Debug.Log(rightWallVertex);
 
 		var forwardDirection = (Vector3.Lerp(leftFloorVertex, rightFloorVertex, 0.5f) - roomPosition).normalized;
 		var sidewaysDirection = (leftWallVertex - rightWallVertex).normalized;
@@ -87,12 +79,14 @@ public class CorridorFactory : ModuleFactory
 			rightOutsideFloorVertex = nextRightOutsideFloorVertex;
 
 		}
+
+		return vertices;
 	}
-	private void GenerateTrianglesWithUniqueVertices(int numberOfCorridorPieces, ref List<Vector3> vertices, ref List<int> triangles)
+	private List<int> GenerateTrianglesWithUniqueVertices(int numberOfCorridorPieces, ref List<Vector3> vertices)
 	{
 		var newVertices = new List<Vector3>();
-		var newTriangles = new List<int>();
-		var numberOfVerticesPerGroup = vertices.Count / numberOfCorridorPieces;
+		var triangles = new List<int>();
+		var numberOfVerticesPerGroup = vertices.Count / (numberOfCorridorPieces + 1);
 
 		for (var i = 0; i < numberOfCorridorPieces; i++)
 		{
@@ -122,16 +116,16 @@ public class CorridorFactory : ModuleFactory
 				newVertices.Add(vertices[thisLeftOutsideFloorVertex]);
 				newVertices.Add(vertices[nextLeftOutsideFloorVertex]);
 				newVertices.Add(vertices[nextLeftOutsideWallVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 
 				newVertices.Add(vertices[nextLeftOutsideWallVertex]);
 				newVertices.Add(vertices[thisLeftOutsideWallVertex]);
 				newVertices.Add(vertices[thisLeftOutsideFloorVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 			}
 
 			// Left roof
@@ -139,16 +133,16 @@ public class CorridorFactory : ModuleFactory
 				newVertices.Add(vertices[thisLeftOutsideWallVertex]);
 				newVertices.Add(vertices[nextLeftOutsideWallVertex]);
 				newVertices.Add(vertices[nextLeftWallVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 
 				newVertices.Add(vertices[nextLeftWallVertex]);
 				newVertices.Add(vertices[thisLeftWallVertex]);
 				newVertices.Add(vertices[thisLeftOutsideWallVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 			}
 
 			// Left wall
@@ -156,16 +150,16 @@ public class CorridorFactory : ModuleFactory
 				newVertices.Add(vertices[thisLeftWallVertex]);
 				newVertices.Add(vertices[nextLeftWallVertex]);
 				newVertices.Add(vertices[nextLeftFloorVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 
 				newVertices.Add(vertices[nextLeftFloorVertex]);
 				newVertices.Add(vertices[thisLeftFloorVertex]);
 				newVertices.Add(vertices[thisLeftWallVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 			}
 
 			// Floor
@@ -173,16 +167,16 @@ public class CorridorFactory : ModuleFactory
 				newVertices.Add(vertices[thisLeftFloorVertex]);
 				newVertices.Add(vertices[nextLeftFloorVertex]);
 				newVertices.Add(vertices[nextRightFloorVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 
 				newVertices.Add(vertices[nextRightFloorVertex]);
 				newVertices.Add(vertices[thisRightFloorVertex]);
 				newVertices.Add(vertices[thisLeftFloorVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 			}
 
 			// Right wall
@@ -190,16 +184,16 @@ public class CorridorFactory : ModuleFactory
 				newVertices.Add(vertices[thisRightFloorVertex]);
 				newVertices.Add(vertices[nextRightFloorVertex]);
 				newVertices.Add(vertices[nextRightWallVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 
 				newVertices.Add(vertices[nextRightWallVertex]);
 				newVertices.Add(vertices[thisRightWallVertex]);
 				newVertices.Add(vertices[thisRightFloorVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 			}
 
 			// Right roof
@@ -207,16 +201,16 @@ public class CorridorFactory : ModuleFactory
 				newVertices.Add(vertices[thisRightOutsideWallVertex]);
 				newVertices.Add(vertices[thisRightWallVertex]);
 				newVertices.Add(vertices[nextRightWallVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 
 				newVertices.Add(vertices[nextRightWallVertex]);
 				newVertices.Add(vertices[nextRightOutsideWallVertex]);
 				newVertices.Add(vertices[thisRightOutsideWallVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 			}
 
 			// Right outside wall
@@ -224,21 +218,22 @@ public class CorridorFactory : ModuleFactory
 				newVertices.Add(vertices[thisRightOutsideFloorVertex]);
 				newVertices.Add(vertices[thisRightOutsideWallVertex]);
 				newVertices.Add(vertices[nextRightOutsideWallVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 
 				newVertices.Add(vertices[nextRightOutsideWallVertex]);
 				newVertices.Add(vertices[nextRightOutsideFloorVertex]);
 				newVertices.Add(vertices[thisRightOutsideFloorVertex]);
-				newTriangles.Add(newVertices.Count - 3);
-				newTriangles.Add(newVertices.Count - 2);
-				newTriangles.Add(newVertices.Count - 1);
+				triangles.Add(newVertices.Count - 3);
+				triangles.Add(newVertices.Count - 2);
+				triangles.Add(newVertices.Count - 1);
 			}
 		}
 
 		vertices = newVertices;
-		triangles = newTriangles;
+
+		return triangles;
 	}
 	private float GetRandomDirectionX(float x)
 	{

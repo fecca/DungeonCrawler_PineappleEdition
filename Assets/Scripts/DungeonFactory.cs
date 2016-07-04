@@ -6,25 +6,32 @@ public class DungeonFactory
 	private RoomFactory _roomFactory = new RoomFactory();
 	private CorridorFactory _corridorFactory = new CorridorFactory();
 
-	public List<Module> CreateDungeon()
+	public List<GameObject> CreateDungeon()
 	{
-		var roomList = new List<Module>();
+		var roomList = new List<RoomModel>();
 		for (var i = 0; i < 1; i++)
 		{
-			var room = _roomFactory.CreateCircularRoom(Vector3.zero, 19, 10, 3, 1);
-			roomList.Add(room);
+			var roomModel = new RoomModel(Vector3.zero, 20, 10, 3, 1);
+			while (IsIntersectingWithWorld(roomModel))
+			{
+				roomModel = new RoomModel(Vector3.one, 20, 10, 3, 1);
+			}
+			roomList.Add(roomModel);
 		}
 
+		var returnList = new List<GameObject>();
 		for (var i = 0; i < roomList.Count; i++)
 		{
-			var room = roomList[i];
-			room.CreateMesh();
-
-			var corridor = _corridorFactory.CreateCorridor(room, 10);
+			var roomModel = roomList[i];
+			returnList.Add(_roomFactory.CreateRoom(roomModel));
+			returnList.Add(_corridorFactory.CreateCorridor(roomModel, 8));
 		}
 
-		return new List<Module>()
-		{
-		};
+		return returnList;
+	}
+
+	private bool IsIntersectingWithWorld(RoomModel roomModel)
+	{
+		return false;
 	}
 }

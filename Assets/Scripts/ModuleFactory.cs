@@ -14,13 +14,15 @@ public class ModuleFactory
 	protected const float CorridorModifierIntervalMin = 0.75f;
 	protected const float CorridorModifierIntervalMax = 1.25f;
 
-	protected Module CompleteGameObject(List<Vector3> vertices, List<int> triangles, List<Vector3> exitVertices)
+	protected GameObject CompleteGameObject(List<Vector3> vertices, List<int> triangles)
 	{
 		var newGameObject = new GameObject("Module");
 
-		var mesh = new Mesh();
-		mesh.vertices = vertices.ToArray();
-		mesh.triangles = triangles.ToArray();
+		var mesh = new Mesh
+		{
+			vertices = vertices.ToArray(),
+			triangles = triangles.ToArray()
+		};
 		mesh.RecalculateBounds();
 		mesh.RecalculateNormals();
 
@@ -36,7 +38,7 @@ public class ModuleFactory
 		//var room = newGameObject.AddComponent<Module>();
 		//room.AddExitVertices(exitVertices);
 
-		return null;
+		return newGameObject;
 	}
 
 	//private void GenerateRoomTrianglesWithSharedVertices(int numberOfCorners)
