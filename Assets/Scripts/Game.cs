@@ -11,11 +11,5 @@ public class Game : MonoBehaviour
 	private void Start()
 	{
 		_dungeon = _dungeonFactory.CreateDungeon();
-		//CreateDude();
-	}
-
-	private void CreateDude()
-	{
-		GameObject dude = Instantiate(DudePrefab, Vector3.zero, DudePrefab.transform.rotation) as GameObject;
 	}
 }

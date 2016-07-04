@@ -3,20 +3,17 @@ using UnityEngine;
 
 public class CorridorFactory : ModuleFactory
 {
-	public GameObject CreateCorridor(RoomModel roomModel, int numberOfCorridorPieces)
+	public GameObject CreateCorridor(Vector3 position, List<Vector3> exitVertices, int numberOfCorridorPieces)
 	{
-		var vertices = GenerateVertices(roomModel, numberOfCorridorPieces);
+		var vertices = GenerateVertices(position, exitVertices, numberOfCorridorPieces);
 		var triangles = GenerateTrianglesWithUniqueVertices(numberOfCorridorPieces, ref vertices);
 
-		return CompleteGameObject(vertices, triangles);
+		return CompleteGameObject(position, vertices, triangles);
 	}
 
-	private List<Vector3> GenerateVertices(RoomModel roomModel, int numberOfCorridorPieces)
+	private List<Vector3> GenerateVertices(Vector3 roomPosition, List<Vector3> roomExitsVertices, int numberOfCorridorPieces)
 	{
 		var vertices = new List<Vector3>();
-
-		var roomExitsVertices = roomModel.ExitVertices;
-		var roomPosition = roomModel.Position;
 
 		var leftWallVertex = roomExitsVertices[0];
 		var leftFloorVertex = roomExitsVertices[1];

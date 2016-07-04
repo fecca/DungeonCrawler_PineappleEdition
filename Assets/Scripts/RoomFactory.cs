@@ -3,31 +3,13 @@ using UnityEngine;
 
 public class RoomFactory : ModuleFactory
 {
-	public GameObject CreateRoom(RoomModel roomModel)
+	public GameObject CreateRoom(Room room)
 	{
-		var vertices = GenerateVertices(roomModel.Position, roomModel.NumberOfCorners, roomModel.Radius, roomModel.Height, roomModel.Thickness);
-		var exitCorner = FindExits(vertices, roomModel.NumberOfCorners);
-		var exitVertices = new List<Vector3>();
-		var triangles = GenerateTriangles(roomModel, exitCorner, ref vertices);
+		var vertices = GenerateVertices(room.Position, room.NumberOfCorners, room.Radius, room.Height, room.Thickness);
+		var exitCorners = FindExits(vertices, room.NumberOfExits);
+		var triangles = GenerateTriangles(room, exitCorners, ref vertices);
 
-		return CompleteGameObject(vertices, triangles);
-
-		//var newGameObject = new GameObject("Module");
-		//newGameObject.transform.position = roomModel.Position;
-
-		//var exitCorner = 0;
-		//var exitVertices = FindExitVertices(vertices, numberOfCorners, exitCorner);
-		//var roomModel = new RoomModel(numberOfCorners, radius, height, thickness)
-		//{
-		//	SharedVertices = vertices,
-		//	ExitCorner = exitCorner,
-		//	ExitVertices = exitVertices
-		//};
-
-		//var room = newGameObject.AddComponent<Room>();
-		//room.Model = roomModel;
-
-		//return newGameObject;
+		return CompleteGameObject(room.Position, vertices, triangles);
 	}
 
 	private List<Vector3> GenerateVertices(Vector3 position, int numberOfCorners, int radius, int height, int thickness)
@@ -76,16 +58,16 @@ public class RoomFactory : ModuleFactory
 
 		return vertices;
 	}
-	private int FindExits(List<Vector3> vertices, int numberOfCorners)
+	private List<int> FindExits(List<Vector3> vertices, int numberOfExits)
 	{
-		var exitCorner = 0;
-		var groupSize = vertices.Count / numberOfCorners;
-		var leftGroup = exitCorner * groupSize;
-		var rightGroup = leftGroup < numberOfCorners - 1 ? leftGroup + 1 : 0;
-
-		return exitCorner;
+		var tmpList = new List<int>();
+		for (var i = 0; i < numberOfExits; i++)
+		{
+			tmpList.Add(i * 4);
+		}
+		return tmpList;
 	}
-	private List<int> GenerateTriangles(RoomModel roomModel, int exitCorner, ref List<Vector3> vertices)
+	private List<int> GenerateTriangles(Room roomModel, List<int> exitCorners, ref List<Vector3> vertices)
 	{
 		var numberOfVerticesPerGroup = vertices.Count / roomModel.NumberOfCorners;
 
@@ -149,13 +131,15 @@ public class RoomFactory : ModuleFactory
 				newTriangles.Add(newVertices.Count - 1);
 			}
 
-			if (exitCorner == i)
+			if (exitCorners.Contains(i))
 			{
 				// Save exit vertices
-				roomModel.ExitVertices.Add(vertices[thisOutsideWallVertex]);
-				roomModel.ExitVertices.Add(vertices[thisOutsideCornerVertex]);
-				roomModel.ExitVertices.Add(vertices[nextOutsideCornerVertex]);
-				roomModel.ExitVertices.Add(vertices[nextOutsideWallVertex]);
+				var tmpList = new List<Vector3>();
+				tmpList.Add(vertices[thisOutsideWallVertex]);
+				tmpList.Add(vertices[thisOutsideCornerVertex]);
+				tmpList.Add(vertices[nextOutsideCornerVertex]);
+				tmpList.Add(vertices[nextOutsideWallVertex]);
+				roomModel.ExitVertices.Add(tmpList);
 
 				// Left wall
 				{
@@ -266,40 +250,5 @@ public class RoomFactory : ModuleFactory
 		vertices = newVertices;
 
 		return newTriangles;
-		//Model.UniqueVertices = newVertices;
-		//Model.Triangles = newTriangles;
 	}
-	//public override void CreateMesh()
-	//{
-	//	var roomGameObject = gameObject;
-	//	GenerateTriangles();
-
-	//	var mesh = new Mesh();
-	//	mesh.vertices = Model.UniqueVertices.ToArray();
-	//	mesh.triangles = Model.Triangles.ToArray();
-	//	mesh.RecalculateBounds();
-	//	mesh.RecalculateNormals();
-
-	//	var meshFilter = roomGameObject.AddComponent<MeshFilter>();
-	//	meshFilter.mesh = mesh;
-
-	//	var meshRenderer = roomGameObject.AddComponent<MeshRenderer>();
-	//	meshRenderer.material = Resources.Load<Material>("WallMaterial_Unlit");
-
-	//	var meshCollider = roomGameObject.AddComponent<MeshCollider>();
-	//	meshCollider.sharedMesh = mesh;
-	//}
-	//private List<Vector3> FindExitVertices(List<Vector3> vertices, int numberOfCorners, int exitCorner)
-	//{
-	//	var groupSize = (vertices.Count / numberOfCorners);
-	//	var thisExitGroup = groupSize * exitCorner;
-	//	var nextExitGroup = groupSize * (thisExitGroup >= numberOfCorners - 1 ? 0 : thisExitGroup + 1);
-	//	var tmpList = new List<Vector3>();
-	//	tmpList.Add(vertices[thisExitGroup + 5]);
-	//	tmpList.Add(vertices[thisExitGroup + 6]);
-	//	tmpList.Add(vertices[nextExitGroup + 6]);
-	//	tmpList.Add(vertices[nextExitGroup + 5]);
-
-	//	return tmpList;
-	//}
 }
