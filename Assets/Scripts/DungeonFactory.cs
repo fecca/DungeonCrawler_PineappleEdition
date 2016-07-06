@@ -1,111 +1,224 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DungeonFactory
 {
 	private RoomFactory _roomFactory = new RoomFactory();
 	private CorridorFactory _corridorFactory = new CorridorFactory();
-	private List<Room> _roomList = new List<Room>();
+	private WorldHandler _worldHandler;
+
 	private int _numberOfRoomsCreated;
-	private const int MaximumNumberOfRoomsAllowed = 10;
+	private const int MaximumNumberOfRoomsAllowed = 100;
+	private int _numberOfRetries;
+	private const int MaximumNumberOfRetries = 50;
+	private List<Bounds> _bounds = new List<Bounds>();
+	private List<Room> _rooms = new List<Room>();
 
-	public List<GameObject> CreateDungeon()
+	private const float CorridorWidth = 5f;
+
+	public IEnumerator Create(WorldHandler worldHandler)
 	{
-		//CreateRoomData();
-		//var dungeonObjects = CreateRoomsAndCorridors();
+		_worldHandler = worldHandler;
 
-		// Create starting room with size and position
-		var size = new Vector3(20, 4, 20);
-		var position = Vector3.zero;
-
-		// Create bounds
-		var bounds = new Bounds(position, size);
-
-		// Can create more rooms?
-		if (_numberOfRoomsCreated < MaximumNumberOfRoomsAllowed)
+		var room = CreateRoom(Vector3.zero, 10, 10, 4, 1, 3);
+		if (IsIntersecting(room))
 		{
-			// Create spider
-			var room = _roomFactory.CreateRoom(new Room(position, 10, 10, 4, 1, 0));
+			yield return null;
+		}
 
-			// Find exits of current room
-			var exits = new List<Vector3>();// room.GetExits();
+		AddRoom(room);
 
-			// Store tried exits
-			var triedExits = new List<Vector3>();
+		var go = new GameObject();
+		var roomScript = go.AddComponent<RoomScript>();
+		roomScript.room = room;
 
-			// Loop exits
-			for (var i = 0; i < exits.Count; i++)
+		while (_numberOfRoomsCreated < MaximumNumberOfRoomsAllowed && _numberOfRetries < MaximumNumberOfRetries)
+		{
+			for (var i = 0; i < room.NumberOfExits; i++)
 			{
-				// Pick random exit
-				var exit = exits.GetRandomElement();
-				// Has untried?
-				while (triedExits.Contains(exit))
+				var exit = room.Exits.GetRandomElement();
+
+				var raycastDistance = 50;
+				var ray = new Ray(exit.Position, exit.Direction);
+				var endOfRayCast = ray.GetPoint(raycastDistance);
+
+				// ToDo: skip raycast, draw bounds instead
+				if (Physics.SphereCast(ray, CorridorWidth * 0.5f, raycastDistance))
 				{
-					// Pick random exit
-					exit = exits.GetRandomElement();
+					Debug.Log("hit");
+					_numberOfRetries++;
+					continue;
 				}
 
-				// Spherecast at random direction for x units
-				// Check collision
-				RaycastHit raycastHit;
-				if (Physics.SphereCast(exit, 10, exit.Direction, out raycastHit, 50))
+				var tmpRoom = CreateRoom(endOfRayCast, 10, 10, 5, 1, 3);
+				if (IsIntersecting(tmpRoom))
+				{
+					Debug.Log("intersected");
+					_numberOfRetries++;
+					continue;
+				}
+
+				var corridorCenter = Vector3.Lerp(exit.Position, endOfRayCast, 0.5f);
+				var corridorSize = new Vector3(CorridorWidth, CorridorWidth, raycastDistance);
+				var corridorAngle = Vector3.Angle(exit.Position, endOfRayCast);
+				AddCollider(corridorCenter, corridorSize, endOfRayCast);
+
+				room = tmpRoom;
+				AddRoom(tmpRoom);
+
+				var roomExit = room.Exits[0].Position;
+
+				// Debugging
+				Debug.DrawRay(exit.Position, exit.Direction * raycastDistance, Color.red, 100f);
+				go = new GameObject();
+				roomScript = go.AddComponent<RoomScript>();
+				roomScript.room = room;
+
+				yield return new WaitForSeconds(0.1f);
+
+				break;
+			}
+		}
+
+		_worldHandler.DestroyColliders();
+	}
+	private void AddRoom(Room room)
+	{
+		AddCollider(room.Position, room.Bounds.size, Vector3.zero);
+
+		_bounds.Add(room.Bounds);
+		_rooms.Add(room);
+		_numberOfRoomsCreated++;
+	}
+	private void AddCollider(Vector3 position, Vector3 size, Vector3 lookAtPosition)
+	{
+		var tmpGameObject = new GameObject();
+		tmpGameObject.transform.position = position;
+
+		var collider = tmpGameObject.AddComponent<BoxCollider>();
+		collider.size = size;
+		collider.transform.LookAt(lookAtPosition);
+
+		_worldHandler.AddTemporaryCollider(tmpGameObject);
+	}
+	private Room CreateRoom(Vector3 position, int numberOfCorners, int radius, int height, int thickness, int numberOfExits)
+	{
+		var room = new Room(position, numberOfCorners, radius, height, thickness, numberOfExits);
+		var vertices = _roomFactory.CreateVertices(room);
+		room.SetVertices(vertices);
+
+		return room;
+	}
+
+
+
+
+
+
+
+
+
+
+	public List<Room> CreateDungeon()
+	{
+		//CreateShell();
+
+		return _rooms;
+	}
+	private void CreateShell()
+	{
+		var room = new Room(Vector3.zero, 10, 10, 4, 1, 3);
+		var vertices = _roomFactory.CreateVertices(room);
+		room.SetVertices(vertices);
+
+		if (IsIntersecting(room))
+		{
+			return;
+		}
+
+		_bounds.Add(room.Bounds);
+		_rooms.Add(room);
+
+		while (_numberOfRoomsCreated < MaximumNumberOfRoomsAllowed)
+		{
+			var exits = room.Exits;
+
+			for (var i = 0; i < room.NumberOfExits; i++)
+			{
+				var exit = exits.GetRandomElement();
+
+				var raycastDistance = room.Radius * 5;
+				var ray = new Ray(exit.Position, exit.Direction);
+				if (Physics.SphereCast(ray, CorridorWidth, raycastDistance))
 				{
 					continue;
 				}
 
-				// Determine size and position
-				var size = new Vector3(20, 4, 20);
-				var position = Vector3.zero;
+				var endOfCorridor = ray.GetPoint(raycastDistance);
 
-				// Create bounds	
-				var position = Vector3.zero;
+				Debug.DrawRay(ray.origin, ray.direction * raycastDistance, Color.red, 100f);
+				//_bounds.Add(new Bounds(Vector3.Lerp(ray.origin, endOfCorridor, 0.5f), new Vector3(raycastDistance, CorridorRadius, CorridorRadius)));
+
+				var roomRadius = 10;
+				var newRoomPosition = endOfCorridor + (ray.direction * room.Radius);
+				room = new Room(newRoomPosition, 10, roomRadius, 4, 1, 3);
+				var tmpVertices = _roomFactory.CreateVertices(room);
+				room.SetVertices(tmpVertices);
+
+				if (IsIntersecting(room))
+				{
+					continue;
+				}
+
+				_bounds.Add(room.Bounds);
+				_rooms.Add(room);
+				_numberOfRoomsCreated++;
+
+				break;
 			}
 		}
-
-		return new List<GameObject>();
 	}
-
-	private void CreateRoomData()
+	private bool IsIntersecting(Room room)
 	{
-		for (var i = 0; i < 2; i++)
+		for (var i = 0; i < _bounds.Count; i++)
 		{
-			var randomPosition = new Vector3(Random.Range(-200, 250), 0, Random.Range(-250, 250));
-			var room = new Room(randomPosition, 20, 10, 3, 1, 4);
-			while (IsIntersectingWithWorld(room))
-			{
-				randomPosition = new Vector3(Random.Range(-200, 250), 0, Random.Range(-250, 250));
-				room = new Room(randomPosition, 20, 10, 3, 1, 4);
-			}
-			_roomList.Add(room);
-		}
-	}
-	private List<GameObject> CreateRoomsAndCorridors()
-	{
-		var gameObjects = new List<GameObject>();
-		for (var i = 0; i < _roomList.Count; i++)
-		{
-			var room = _roomList[i];
-			gameObjects.Add(_roomFactory.CreateRoom(room));
-			for (var j = 0; j < room.ExitVertices.Count; j++)
-			{
-				var exitVertices = room.ExitVertices[j];
-				gameObjects.Add(_corridorFactory.CreateCorridor(room.Position, exitVertices, 8));
-			}
-		}
-
-		return gameObjects;
-	}
-	private bool IsIntersectingWithWorld(Room room)
-	{
-		for (var i = 0; i < _roomList.Count; i++)
-		{
-			var tmpRoom = _roomList[i];
-			var minimumAllowedDistance = (tmpRoom.Radius + room.Radius) + 1;
-			if (Vector3.Distance(tmpRoom.Position, room.Position) <= minimumAllowedDistance)
+			if (_bounds[i].Intersects(room.Bounds))
 			{
 				return true;
 			}
 		}
 		return false;
 	}
+
+	//private void CreateRoomData()
+	//{
+	//	for (var i = 0; i < 2; i++)
+	//	{
+	//		var randomPosition = new Vector3(Random.Range(-200, 250), 0, Random.Range(-250, 250));
+	//		var room = new Room(randomPosition, 20, 10, 3, 1, 4);
+	//		while (IsIntersectingWithWorld(room))
+	//		{
+	//			randomPosition = new Vector3(Random.Range(-200, 250), 0, Random.Range(-250, 250));
+	//			room = new Room(randomPosition, 20, 10, 3, 1, 4);
+	//		}
+	//		_roomList.Add(room);
+	//	}
+	//}
+	//private List<GameObject> CreateRoomsAndCorridors()
+	//{
+	//	var gameObjects = new List<GameObject>();
+	//	for (var i = 0; i < _roomList.Count; i++)
+	//	{
+	//		var room = _roomList[i];
+	//		gameObjects.Add(_roomFactory.CreateRoom(room));
+	//		for (var j = 0; j < room.ExitVertices.Count; j++)
+	//		{
+	//			var exitVertices = room.ExitVertices[j];
+	//			gameObjects.Add(_corridorFactory.CreateCorridor(room.Position, exitVertices, 8));
+	//		}
+	//	}
+
+	//	return gameObjects;
+	//}
 }

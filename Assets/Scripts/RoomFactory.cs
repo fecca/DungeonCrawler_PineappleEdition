@@ -3,6 +3,53 @@ using UnityEngine;
 
 public class RoomFactory : ModuleFactory
 {
+	public List<Vector3> CreateVertices(Room room)
+	{
+		var vertices = new List<Vector3>();
+		var angle = Random.Range(0f, 360f);
+		var angleStep = 360f / room.NumberOfCorners;
+		for (var i = 0; i < room.NumberOfCorners; i++)
+		{
+			var roomPosition = room.Position;
+			var modifiedAngle = angle + (angleStep * 0.5f) * Random.Range(AngleModifierIntervalMin, AngleModifierIntervalMax);
+			var modifiedRadius = room.Radius * Random.Range(RadiusModifierIntervalMin, RadiusModifierIntervalMax);
+			var x = Mathf.Sin(Mathf.Deg2Rad * modifiedAngle) * modifiedRadius;
+			var z = Mathf.Cos(Mathf.Deg2Rad * modifiedAngle) * modifiedRadius;
+
+			// Origo
+			vertices.Add(roomPosition);
+
+			// Floor vertex 1
+			var floorVertex1 = (new Vector3(x * 0.33f, roomPosition.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), z * 0.33f) + roomPosition);
+			vertices.Add(floorVertex1);
+
+			// Floor vertex 2
+			var floorVertex2 = (new Vector3(x * 0.66f, roomPosition.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), z * 0.66f) + roomPosition);
+			vertices.Add(floorVertex2);
+
+			// Corner vertex
+			var cornerVertex = new Vector3(x, roomPosition.y, z) + roomPosition;
+			vertices.Add(cornerVertex);
+
+			var directionNormalized = (cornerVertex - roomPosition).normalized;
+
+			// Wall vertex
+			var wallVertex = cornerVertex + (Vector3.up * room.Height);
+			vertices.Add(wallVertex);
+
+			// Outside wall vertex
+			var outsideWallVertex = wallVertex + (directionNormalized * room.Thickness);
+			vertices.Add(outsideWallVertex);
+
+			// Outside corner vertex
+			var outsideCornerVertex = directionNormalized + cornerVertex;
+			vertices.Add(outsideCornerVertex);
+
+			angle += 360f / room.NumberOfCorners;
+		}
+
+		return vertices;
+	}
 	public GameObject CreateRoom(Room room)
 	{
 		var vertices = GenerateVertices(room.Position, room.NumberOfCorners, room.Radius, room.Height, room.Thickness);
@@ -139,7 +186,7 @@ public class RoomFactory : ModuleFactory
 				tmpList.Add(vertices[thisOutsideCornerVertex]);
 				tmpList.Add(vertices[nextOutsideCornerVertex]);
 				tmpList.Add(vertices[nextOutsideWallVertex]);
-				roomModel.ExitVertices.Add(tmpList);
+				//roomModel.ExitVertices.Add(tmpList);
 
 				// Left wall
 				{
