@@ -6,13 +6,63 @@ public class DungeonFactory
 	private RoomFactory _roomFactory = new RoomFactory();
 	private CorridorFactory _corridorFactory = new CorridorFactory();
 	private List<Room> _roomList = new List<Room>();
+	private int _numberOfRoomsCreated;
+	private const int MaximumNumberOfRoomsAllowed = 10;
 
 	public List<GameObject> CreateDungeon()
 	{
-		CreateRoomData();
-		var dungeonObjects = CreateRoomsAndCorridors();
+		//CreateRoomData();
+		//var dungeonObjects = CreateRoomsAndCorridors();
 
-		return dungeonObjects;
+		// Create starting room with size and position
+		var size = new Vector3(20, 4, 20);
+		var position = Vector3.zero;
+
+		// Create bounds
+		var bounds = new Bounds(position, size);
+
+		// Can create more rooms?
+		if (_numberOfRoomsCreated < MaximumNumberOfRoomsAllowed)
+		{
+			// Create spider
+			var room = _roomFactory.CreateRoom(new Room(position, 10, 10, 4, 1, 0));
+
+			// Find exits of current room
+			var exits = new List<Vector3>();// room.GetExits();
+
+			// Store tried exits
+			var triedExits = new List<Vector3>();
+
+			// Loop exits
+			for (var i = 0; i < exits.Count; i++)
+			{
+				// Pick random exit
+				var exit = exits.GetRandomElement();
+				// Has untried?
+				while (triedExits.Contains(exit))
+				{
+					// Pick random exit
+					exit = exits.GetRandomElement();
+				}
+
+				// Spherecast at random direction for x units
+				// Check collision
+				RaycastHit raycastHit;
+				if (Physics.SphereCast(exit, 10, exit.Direction, out raycastHit, 50))
+				{
+					continue;
+				}
+
+				// Determine size and position
+				var size = new Vector3(20, 4, 20);
+				var position = Vector3.zero;
+
+				// Create bounds	
+				var position = Vector3.zero;
+			}
+		}
+
+		return new List<GameObject>();
 	}
 
 	private void CreateRoomData()
