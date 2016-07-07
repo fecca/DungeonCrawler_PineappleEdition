@@ -64,6 +64,7 @@ public class CorridorFactory : ModuleFactory
 
 		for (var i = 1; i < numberOfQuads; i++)
 		{
+			var randomY = Vector3.up * Random.Range(-0.5f, 0.5f);
 			leftOuterFloor = fromExit.BottomLeftExit + (thicknessDirection * 1) + (bottomLeftDirection * (bottomLeftQuadSize * i));
 			leftOuterWall = fromExit.TopLeftExit + (thicknessDirection * 1) + (topLeftDirection * (topLeftQuadSize * i));
 			leftWall = fromExit.TopLeftExit + (topLeftDirection * (topLeftQuadSize * i));
@@ -73,14 +74,14 @@ public class CorridorFactory : ModuleFactory
 			rightOuterWall = fromExit.TopRightExit - (thicknessDirection * 1) + (topRightDirection * (topRightQuadSize * i));
 			rightOuterFloor = fromExit.BottomRightExit - (thicknessDirection * 1) + (bottomRightDirection * (bottomRightQuadSize * i));
 
-			vertices.Add(leftOuterFloor);
-			vertices.Add(leftOuterWall);
-			vertices.Add(leftWall);
-			vertices.Add(leftFloor);
-			vertices.Add(rightFloor);
-			vertices.Add(rightWall);
-			vertices.Add(rightOuterWall);
-			vertices.Add(rightOuterFloor);
+			vertices.Add(leftOuterFloor + randomY);
+			vertices.Add(leftOuterWall + randomY);
+			vertices.Add(leftWall + randomY);
+			vertices.Add(leftFloor + randomY);
+			vertices.Add(rightFloor + randomY);
+			vertices.Add(rightWall + randomY);
+			vertices.Add(rightOuterWall + randomY);
+			vertices.Add(rightOuterFloor + randomY);
 
 			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
 			//go.transform.localScale = Vector3.one * 0.5f;

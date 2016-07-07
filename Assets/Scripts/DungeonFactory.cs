@@ -5,7 +5,7 @@ using UnityEngine;
 public class DungeonFactory
 {
 	private const float CorridorWidth = 5f;
-	private const int MaximumNumberOfRoomsAllowed = 100;
+	private const int MaximumNumberOfRoomsAllowed = 20;
 	private const int MaximumNumberOfRetries = 50;
 
 	private readonly RoomFactory _roomFactory = new RoomFactory();
@@ -23,7 +23,7 @@ public class DungeonFactory
 		_worldHandler = worldHandler;
 
 		// First room
-		var currentRoom = CreateRoom(Vector3.zero, Random.Range(10, 21), Random.Range(8, 17), Random.Range(4, 7), Random.Range(1, 3), 3);
+		var currentRoom = CreateRoom(Vector3.zero, Random.Range(10, 30), Random.Range(15, 25), Random.Range(5, 10), Random.Range(2, 4), 3);
 		if (IsIntersecting(currentRoom))
 		{
 			yield return null;
@@ -61,7 +61,7 @@ public class DungeonFactory
 				currentRoom.ExitCorners.Add(currentExit.CornerIndex);
 				newRoom.ExitCorners.Add(newExit.CornerIndex);
 
-				var corridor = CreateCorridor(currentExit, newExit, Random.Range(8, 21));
+				var corridor = CreateCorridor(currentExit, newExit, Random.Range(4, 10));
 				AddCorridor(corridor);
 
 				AddRoom(newRoom);
