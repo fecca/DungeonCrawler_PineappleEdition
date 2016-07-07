@@ -3,89 +3,72 @@ using UnityEngine;
 
 public class CorridorFactory : ModuleFactory
 {
-	public GameObject CreateCorridor(Vector3 position, List<Vector3> exitVertices, int numberOfCorridorPieces)
-	{
-		var vertices = GenerateVertices(position, exitVertices, numberOfCorridorPieces);
-		var triangles = GenerateTrianglesWithUniqueVertices(numberOfCorridorPieces, ref vertices);
+	private const int NumberOfQuads = 20;
 
-		return CompleteGameObject(position, vertices, triangles);
-	}
-
-	private List<Vector3> GenerateVertices(Vector3 roomPosition, List<Vector3> roomExitsVertices, int numberOfCorridorPieces)
+	public List<Vector3> CreateVertices(Exit fromExit, Exit toExit)
 	{
+		var bottomLeftQuadSize = Vector3.Distance(fromExit.BottomLeftExit, toExit.BottomLeftExit) / NumberOfQuads;
+		var bottomRightQuadSize = Vector3.Distance(fromExit.BottomRightExit, toExit.BottomRightExit) / NumberOfQuads;
+		var topLeftQuadSize = Vector3.Distance(fromExit.TopLeftExit, toExit.TopLeftExit) / NumberOfQuads;
+		var topRightQuadSize = Vector3.Distance(fromExit.TopRightExit, toExit.TopRightExit) / NumberOfQuads;
+
 		var vertices = new List<Vector3>();
-
-		var leftWallVertex = roomExitsVertices[0];
-		var leftFloorVertex = roomExitsVertices[1];
-		var rightFloorVertex = roomExitsVertices[2];
-		var rightWallVertex = roomExitsVertices[3];
-
-		var forwardDirection = (Vector3.Lerp(leftFloorVertex, rightFloorVertex, 0.5f) - roomPosition).normalized;
-		var sidewaysDirection = (leftWallVertex - rightWallVertex).normalized;
-		var corridorWidth = Vector3.Distance(leftFloorVertex, rightFloorVertex);
-		var corridorHeight = Vector3.Distance(leftFloorVertex, leftWallVertex);
-
-		var leftOutsideFloorVertex = leftFloorVertex;
-		var leftOutsideWallVertex = leftWallVertex;
-		var rightOutsideWallVertex = rightWallVertex;
-		var rightOutsideFloorVertex = rightFloorVertex;
-
-		vertices.Add(leftOutsideFloorVertex);
-		vertices.Add(leftOutsideWallVertex);
-		vertices.Add(leftWallVertex);
-		vertices.Add(leftFloorVertex);
-		vertices.Add(rightFloorVertex);
-		vertices.Add(rightWallVertex);
-		vertices.Add(rightOutsideWallVertex);
-		vertices.Add(rightOutsideFloorVertex);
-
-		for (var i = 0; i < numberOfCorridorPieces; i++)
+		for (var i = 0; i < NumberOfQuads; i++)
 		{
-			var randomXDirection = GetRandomDirectionX(forwardDirection.x);
-			var randomYDirection = GetRandomDirectionY(forwardDirection.y);
-			var randomZDirection = GetRandomDirectionZ(forwardDirection.z);
-			var randomLeftDirection = new Vector3(randomXDirection, randomYDirection, randomZDirection);
-			var randomRightDirection = new Vector3(randomXDirection, randomYDirection, randomZDirection);
+			var leftOuterFloor = fromExit.BottomLeftExit * (bottomLeftQuadSize * i);
+			var leftOuterWall = fromExit.TopLeftExit * (topLeftQuadSize * i);
+			var leftWall = fromExit.TopLeftExit * (topLeftQuadSize * i);
+			var leftFloor = fromExit.BottomLeftExit * (bottomLeftQuadSize * i);
+			var rightFloor = fromExit.BottomRightExit * (bottomRightQuadSize * i);
+			var rightWall = fromExit.TopRightExit * (topRightQuadSize * i);
+			var rightOuterWall = fromExit.TopRightExit * (topRightQuadSize * i);
+			var rightOuterFloor = fromExit.BottomRightExit * (bottomRightQuadSize * i);
 
-			var nextLeftFloorVertex = leftFloorVertex + (corridorWidth * randomLeftDirection);
-			var nextLeftWallVertex = new Vector3(nextLeftFloorVertex.x, nextLeftFloorVertex.y + corridorHeight, nextLeftFloorVertex.z);
-			var nextRightFloorVertex = rightFloorVertex + (corridorWidth * randomRightDirection);
-			var nextRightWallVertex = new Vector3(nextRightFloorVertex.x, nextRightFloorVertex.y + corridorHeight, nextRightFloorVertex.z);
+			vertices.Add(leftOuterFloor);
+			vertices.Add(leftOuterWall);
+			vertices.Add(leftWall);
+			vertices.Add(leftFloor);
+			vertices.Add(rightFloor);
+			vertices.Add(rightWall);
+			vertices.Add(rightOuterWall);
+			vertices.Add(rightOuterFloor);
 
-			var nextLeftOutsideFloorVertex = nextLeftFloorVertex + (sidewaysDirection * 1);
-			var nextLeftOutsideWallVertex = nextLeftWallVertex + (sidewaysDirection * 1);
-			var nextRightOutsideWallVertex = nextRightWallVertex - (sidewaysDirection * 1);
-			var nextRightOutsideFloorVertex = nextRightFloorVertex - (sidewaysDirection * 1);
-
-			vertices.Add(nextLeftOutsideFloorVertex);
-			vertices.Add(nextLeftOutsideWallVertex);
-			vertices.Add(nextLeftWallVertex);
-			vertices.Add(nextLeftFloorVertex);
-			vertices.Add(nextRightFloorVertex);
-			vertices.Add(nextRightWallVertex);
-			vertices.Add(nextRightOutsideWallVertex);
-			vertices.Add(nextRightOutsideFloorVertex);
-
-			leftOutsideFloorVertex = nextLeftOutsideFloorVertex;
-			leftOutsideWallVertex = nextLeftOutsideWallVertex;
-			leftWallVertex = nextLeftWallVertex;
-			leftFloorVertex = nextLeftFloorVertex;
-			rightFloorVertex = nextRightFloorVertex;
-			rightWallVertex = nextRightWallVertex;
-			rightOutsideWallVertex = nextRightOutsideWallVertex;
-			rightOutsideFloorVertex = nextRightOutsideFloorVertex;
-
+			var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.localScale = Vector3.one * 0.5f;
+			go.transform.position = leftOuterFloor;
+			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.localScale = Vector3.one * 0.5f;
+			go.transform.position = leftOuterWall;
+			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.localScale = Vector3.one * 0.5f;
+			go.transform.position = leftWall;
+			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.localScale = Vector3.one * 0.5f;
+			go.transform.position = leftFloor;
+			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.localScale = Vector3.one * 0.5f;
+			go.transform.position = rightFloor;
+			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.localScale = Vector3.one * 0.5f;
+			go.transform.position = rightWall;
+			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.localScale = Vector3.one * 0.5f;
+			go.transform.position = rightOuterWall;
+			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.localScale = Vector3.one * 0.5f;
+			go.transform.position = rightOuterFloor;
 		}
 
 		return vertices;
 	}
-	private List<int> GenerateTrianglesWithUniqueVertices(int numberOfCorridorPieces, ref List<Vector3> vertices)
+	public List<int> CreateTriangles(Corridor corridor)
 	{
+		var vertices = corridor.Vertices;
 		var newVertices = new List<Vector3>();
 		var triangles = new List<int>();
-		var numberOfVerticesPerGroup = vertices.Count / (numberOfCorridorPieces + 1);
+		var numberOfVerticesPerGroup = vertices.Count / (corridor.NumberOfQuads + 1);
 
-		for (var i = 0; i < numberOfCorridorPieces; i++)
+		for (var i = 0; i < corridor.NumberOfQuads; i++)
 		{
 			var thisGroup = (numberOfVerticesPerGroup * i);
 			var nextGroup = thisGroup + numberOfVerticesPerGroup;

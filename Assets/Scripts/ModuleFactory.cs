@@ -14,10 +14,10 @@ public class ModuleFactory
 	protected const float CorridorModifierIntervalMin = 0.75f;
 	protected const float CorridorModifierIntervalMax = 1.25f;
 
-	protected GameObject CompleteGameObject(Vector3 position, List<Vector3> vertices, List<int> triangles)
+	protected GameObject CompleteGameObject(List<Vector3> vertices, List<int> triangles)
 	{
 		var newGameObject = new GameObject("Module");
-		newGameObject.transform.position = position;
+		newGameObject.transform.position = Vector3.zero;
 
 		var mesh = new Mesh
 		{

@@ -11,24 +11,10 @@ public class Room
 	public int NumberOfExits { get; private set; }
 	public List<Vector3> Vertices { get; private set; }
 	public Bounds Bounds { get; private set; }
-	public List<Exit> Exits
-	{
-		get
-		{
-			if (_exits == null)
-			{
-				throw new System.NotImplementedException("List of exits not set. Call SetVertices first, noob.");
-			}
-
-			return _exits;
-		}
-		private set
-		{
-			_exits = value;
-		}
-	}
-
-	private List<Exit> _exits;
+	public List<Exit> PotentialExits { get; set; }
+	public List<int> ExitCorners { get; set; }
+	public Exit Exit { get; set; }
+	public Exit LinksTo { get; set; }
 
 	public Room(Vector3 position, int numberOfCorners, int radius, int height, int thickness, int numberOfExits)
 	{
@@ -40,17 +26,19 @@ public class Room
 		NumberOfExits = numberOfExits;
 		Vertices = new List<Vector3>();
 		Bounds = new Bounds(Position, new Vector3(Radius * 2 + Thickness * 2, Height, Radius * 2 + Thickness * 2));
-		_exits = null;
+		ExitCorners = new List<int>();
 	}
 
 	public void SetVertices(List<Vector3> vertices)
 	{
 		Vertices = vertices;
-
-		Exits = FindExits();
+	}
+	public void FindPotentialCorners()
+	{
+		PotentialExits = FindPotentialExits();
 	}
 
-	private List<Exit> FindExits()
+	private List<Exit> FindPotentialExits()
 	{
 		var groupSize = Vertices.Count / NumberOfCorners;
 
@@ -59,27 +47,12 @@ public class Room
 		{
 			var thisGroup = groupSize * i;
 			var nextGroup = i < NumberOfCorners - 1 ? thisGroup + groupSize : 0;
-			var thisVertex = Vertices[thisGroup + 6];
-			var nextVertex = Vertices[nextGroup + 6];
-			var midVertex = Vector3.Lerp(thisVertex, nextVertex, 0.5f);
-			var direction = (midVertex - Position).normalized;
+			var topLeft = Vertices[thisGroup + 5];
+			var bottomLeft = Vertices[thisGroup + 6];
+			var bottomRight = Vertices[nextGroup + 6];
+			var topRight = Vertices[nextGroup + 5];
 
-			tmpList.Add(new Exit(midVertex, direction));
-
-			//var a = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			//a.name = "This" + i;
-			//a.transform.position = thisVertex;
-			//a.transform.localScale = Vector3.one * 0.2f;
-
-			//var b = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			//b.name = "Next" + i;
-			//b.transform.position = nextVertex;
-			//b.transform.localScale = Vector3.one * 0.2f;
-
-			//var c = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-			//c.name = "Mid" + i;
-			//c.transform.position = midVertex;
-			//c.transform.localScale = Vector3.one * 0.3f;
+			tmpList.Add(new Exit(i, topLeft, bottomLeft, bottomRight, topRight));
 		}
 
 		return tmpList;
@@ -88,12 +61,40 @@ public class Room
 
 public class Exit
 {
+	public int CornerIndex { get; private set; }
+	public Vector3 TopLeftExit { get; private set; }
+	public Vector3 BottomLeftExit { get; private set; }
+	public Vector3 BottomRightExit { get; private set; }
+	public Vector3 TopRightExit { get; private set; }
 	public Vector3 Position { get; private set; }
-	public Vector3 Direction { get; private set; }
 
-	public Exit(Vector3 position, Vector3 direction)
+	public Exit(int cornerIndex, Vector3 topLeftExit, Vector3 bottomLeftExit, Vector3 bottomRightExit, Vector3 topRightExit)
 	{
-		Position = position;
-		Direction = direction;
+		CornerIndex = cornerIndex;
+		TopLeftExit = topLeftExit;
+		BottomLeftExit = bottomLeftExit;
+		BottomRightExit = bottomRightExit;
+		TopRightExit = topRightExit;
+		Position = Vector3.Lerp(bottomLeftExit, bottomRightExit, 0.5f);
+	}
+}
+
+public class Corridor
+{
+	public List<Vector3> Vertices { get; private set; }
+	public Exit From { get; private set; }
+	public Exit To { get; private set; }
+	public int NumberOfQuads { get; set; }
+
+	public Corridor(Exit from, Exit to, int numberOfQuads)
+	{
+		From = from;
+		To = to;
+		NumberOfQuads = numberOfQuads;
+	}
+
+	public void SetVertices(List<Vector3> vertices)
+	{
+		Vertices = vertices;
 	}
 }

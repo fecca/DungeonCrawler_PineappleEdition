@@ -3,19 +3,28 @@ using UnityEngine;
 
 public class WorldHandler : MonoBehaviour
 {
-	private List<GameObject> _temporaryColliders = new List<GameObject>();
+	private readonly List<BoxCollider> _temporaryColliders = new List<BoxCollider>();
 
-	public void AddTemporaryCollider(GameObject collider)
+	public void OnDrawGizmos()
 	{
-		_temporaryColliders.Add(collider);
+		for (var i = 0; i < _temporaryColliders.Count; i++)
+		{
+			//var boxCollider = _temporaryColliders[i].GetComponent<BoxCollider>();
+			//Gizmos.DrawWireCube(boxCollider.transform.position, boxCollider.size);
+		}
+	}
+
+	public void AddTemporaryCollider(BoxCollider boxCollider)
+	{
+		_temporaryColliders.Add(boxCollider);
 	}
 	public void DestroyColliders()
 	{
 		for (var i = _temporaryColliders.Count - 1; i >= 0; i--)
 		{
-			var collider = _temporaryColliders[i];
-			_temporaryColliders.Remove(collider);
-			Destroy(collider);
+			var boxCollider = _temporaryColliders[i];
+			_temporaryColliders.Remove(boxCollider);
+			Destroy(boxCollider.gameObject);
 		}
 	}
 }

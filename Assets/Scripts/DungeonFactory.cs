@@ -4,94 +4,142 @@ using UnityEngine;
 
 public class DungeonFactory
 {
-	private RoomFactory _roomFactory = new RoomFactory();
-	private CorridorFactory _corridorFactory = new CorridorFactory();
-	private WorldHandler _worldHandler;
-
-	private int _numberOfRoomsCreated;
-	private const int MaximumNumberOfRoomsAllowed = 100;
-	private int _numberOfRetries;
-	private const int MaximumNumberOfRetries = 50;
-	private List<Bounds> _bounds = new List<Bounds>();
-	private List<Room> _rooms = new List<Room>();
-
 	private const float CorridorWidth = 5f;
+	private const int MaximumNumberOfRoomsAllowed = 5;
+	private const int MaximumNumberOfRetries = 50;
 
-	public IEnumerator Create(WorldHandler worldHandler)
+	private readonly RoomFactory _roomFactory = new RoomFactory();
+	private readonly CorridorFactory _corridorFactory = new CorridorFactory();
+	private readonly List<Bounds> _bounds = new List<Bounds>();
+	private readonly List<Room> _rooms = new List<Room>();
+	private readonly List<Corridor> _corridors = new List<Corridor>();
+
+	private WorldHandler _worldHandler;
+	private int _numberOfRoomsCreated;
+	private int _numberOfRetries;
+
+	public IEnumerator CreateDungeon(WorldHandler worldHandler)
 	{
 		_worldHandler = worldHandler;
 
-		var room = CreateRoom(Vector3.zero, 10, 10, 4, 1, 3);
-		if (IsIntersecting(room))
+		// First room
+		var currentRoom = CreateRoom(Vector3.zero, Random.Range(10, 21), Random.Range(8, 17), Random.Range(4, 7), Random.Range(1, 3), 3);
+		if (IsIntersecting(currentRoom))
 		{
 			yield return null;
 		}
-
-		AddRoom(room);
-
-		var go = new GameObject();
-		var roomScript = go.AddComponent<RoomScript>();
-		roomScript.room = room;
+		AddRoom(currentRoom);
 
 		while (_numberOfRoomsCreated < MaximumNumberOfRoomsAllowed && _numberOfRetries < MaximumNumberOfRetries)
 		{
-			for (var i = 0; i < room.NumberOfExits; i++)
+			for (var i = 0; i < currentRoom.NumberOfExits; i++)
 			{
-				var exit = room.Exits.GetRandomElement();
+				var currentExit = currentRoom.PotentialExits.GetRandomElement();
 
+				// Raycast from random exit
 				var raycastDistance = 50;
-				var ray = new Ray(exit.Position, exit.Direction);
-				var endOfRayCast = ray.GetPoint(raycastDistance);
-
-				// ToDo: skip raycast, draw bounds instead
+				var currentExitDirection = (currentExit.Position - currentRoom.Position).normalized;
+				var ray = new Ray(currentExit.Position, currentExitDirection);
 				if (Physics.SphereCast(ray, CorridorWidth * 0.5f, raycastDistance))
 				{
-					Debug.Log("hit");
 					_numberOfRetries++;
 					continue;
 				}
 
-				var tmpRoom = CreateRoom(endOfRayCast, 10, 10, 5, 1, 3);
-				if (IsIntersecting(tmpRoom))
+				// Create room with vertices and check for collision
+				var newRoom = CreateRoom(ray.GetPoint(raycastDistance), Random.Range(10, 21), Random.Range(8, 17), Random.Range(4, 7), Random.Range(1, 3), 3);
+				if (IsIntersecting(newRoom))
 				{
-					Debug.Log("intersected");
 					_numberOfRetries++;
 					continue;
 				}
 
-				var corridorCenter = Vector3.Lerp(exit.Position, endOfRayCast, 0.5f);
-				var corridorSize = new Vector3(CorridorWidth, CorridorWidth, raycastDistance);
-				var corridorAngle = Vector3.Angle(exit.Position, endOfRayCast);
-				AddCollider(corridorCenter, corridorSize, endOfRayCast);
+				// Setup exits
+				var newExit = FindNearestExit(newRoom.PotentialExits, currentExit);
+				currentRoom.Exit = currentExit;
+				currentRoom.LinksTo = newExit;
+				currentRoom.ExitCorners.Add(currentExit.CornerIndex);
+				newRoom.ExitCorners.Add(newExit.CornerIndex);
 
-				room = tmpRoom;
-				AddRoom(tmpRoom);
+				var corridor = CreateCorridor(currentExit, newExit, Random.Range(8, 21));
+				AddCorridor(corridor);
 
-				var roomExit = room.Exits[0].Position;
+				AddRoom(newRoom);
+				currentRoom = newRoom;
 
-				// Debugging
-				Debug.DrawRay(exit.Position, exit.Direction * raycastDistance, Color.red, 100f);
-				go = new GameObject();
-				roomScript = go.AddComponent<RoomScript>();
-				roomScript.room = room;
-
-				yield return new WaitForSeconds(0.1f);
+				yield return new WaitForEndOfFrame();
 
 				break;
 			}
 		}
 
 		_worldHandler.DestroyColliders();
+
+		MessageHub.Instance.Publish(new DungeonCreatedMessage(null));
+	}
+	public IEnumerator CreateMeshes()
+	{
+		for (var i = 0; i < _rooms.Count; i++)
+		{
+			_roomFactory.CreateTriangles(_rooms[i]);
+
+			yield return new WaitForEndOfFrame();
+		}
+
+		for (var i = 0; i < _corridors.Count; i++)
+		{
+			_corridorFactory.CreateTriangles(_corridors[i]);
+
+			yield return new WaitForEndOfFrame();
+		}
+	}
+
+	private Room CreateRoom(Vector3 position, int numberOfCorners, int radius, int height, int thickness, int numberOfExits)
+	{
+		var room = new Room(position, numberOfCorners, radius, height, thickness, numberOfExits);
+		room.SetVertices(_roomFactory.CreateVertices(room));
+		room.FindPotentialCorners();
+
+		return room;
 	}
 	private void AddRoom(Room room)
 	{
-		AddCollider(room.Position, room.Bounds.size, Vector3.zero);
-
+		AddTemporaryCollider(room.Position, room.Bounds.size, Vector3.zero);
 		_bounds.Add(room.Bounds);
 		_rooms.Add(room);
 		_numberOfRoomsCreated++;
 	}
-	private void AddCollider(Vector3 position, Vector3 size, Vector3 lookAtPosition)
+	private Exit FindNearestExit(List<Exit> exits, Exit referenceExit)
+	{
+		var nearest = exits[0];
+		var distance = Vector3.Distance(nearest.Position, referenceExit.Position);
+		for (var i = 0; i < exits.Count; i++)
+		{
+			var exit = exits[i];
+			var tmpDistance = Vector3.Distance(exit.Position, referenceExit.Position);
+			if (tmpDistance < distance)
+			{
+				nearest = exit;
+				distance = tmpDistance;
+			}
+		}
+
+		return nearest;
+	}
+	private Corridor CreateCorridor(Exit from, Exit to, int numberOfQuads)
+	{
+		var corridor = new Corridor(from, to, numberOfQuads);
+		corridor.SetVertices(_corridorFactory.CreateVertices(from, to));
+
+		return corridor;
+	}
+	private void AddCorridor(Corridor corridor)
+	{
+		var colliderSize = new Vector3(CorridorWidth, CorridorWidth, Vector3.Distance(corridor.From.Position, corridor.To.Position));
+		AddTemporaryCollider(Vector3.Lerp(corridor.From.Position, corridor.To.Position, 0.5f), colliderSize, corridor.To.Position);
+		_corridors.Add(corridor);
+	}
+	private void AddTemporaryCollider(Vector3 position, Vector3 size, Vector3 lookAtPosition)
 	{
 		var tmpGameObject = new GameObject();
 		tmpGameObject.transform.position = position;
@@ -100,84 +148,7 @@ public class DungeonFactory
 		collider.size = size;
 		collider.transform.LookAt(lookAtPosition);
 
-		_worldHandler.AddTemporaryCollider(tmpGameObject);
-	}
-	private Room CreateRoom(Vector3 position, int numberOfCorners, int radius, int height, int thickness, int numberOfExits)
-	{
-		var room = new Room(position, numberOfCorners, radius, height, thickness, numberOfExits);
-		var vertices = _roomFactory.CreateVertices(room);
-		room.SetVertices(vertices);
-
-		return room;
-	}
-
-
-
-
-
-
-
-
-
-
-	public List<Room> CreateDungeon()
-	{
-		//CreateShell();
-
-		return _rooms;
-	}
-	private void CreateShell()
-	{
-		var room = new Room(Vector3.zero, 10, 10, 4, 1, 3);
-		var vertices = _roomFactory.CreateVertices(room);
-		room.SetVertices(vertices);
-
-		if (IsIntersecting(room))
-		{
-			return;
-		}
-
-		_bounds.Add(room.Bounds);
-		_rooms.Add(room);
-
-		while (_numberOfRoomsCreated < MaximumNumberOfRoomsAllowed)
-		{
-			var exits = room.Exits;
-
-			for (var i = 0; i < room.NumberOfExits; i++)
-			{
-				var exit = exits.GetRandomElement();
-
-				var raycastDistance = room.Radius * 5;
-				var ray = new Ray(exit.Position, exit.Direction);
-				if (Physics.SphereCast(ray, CorridorWidth, raycastDistance))
-				{
-					continue;
-				}
-
-				var endOfCorridor = ray.GetPoint(raycastDistance);
-
-				Debug.DrawRay(ray.origin, ray.direction * raycastDistance, Color.red, 100f);
-				//_bounds.Add(new Bounds(Vector3.Lerp(ray.origin, endOfCorridor, 0.5f), new Vector3(raycastDistance, CorridorRadius, CorridorRadius)));
-
-				var roomRadius = 10;
-				var newRoomPosition = endOfCorridor + (ray.direction * room.Radius);
-				room = new Room(newRoomPosition, 10, roomRadius, 4, 1, 3);
-				var tmpVertices = _roomFactory.CreateVertices(room);
-				room.SetVertices(tmpVertices);
-
-				if (IsIntersecting(room))
-				{
-					continue;
-				}
-
-				_bounds.Add(room.Bounds);
-				_rooms.Add(room);
-				_numberOfRoomsCreated++;
-
-				break;
-			}
-		}
+		_worldHandler.AddTemporaryCollider(collider);
 	}
 	private bool IsIntersecting(Room room)
 	{
@@ -190,35 +161,4 @@ public class DungeonFactory
 		}
 		return false;
 	}
-
-	//private void CreateRoomData()
-	//{
-	//	for (var i = 0; i < 2; i++)
-	//	{
-	//		var randomPosition = new Vector3(Random.Range(-200, 250), 0, Random.Range(-250, 250));
-	//		var room = new Room(randomPosition, 20, 10, 3, 1, 4);
-	//		while (IsIntersectingWithWorld(room))
-	//		{
-	//			randomPosition = new Vector3(Random.Range(-200, 250), 0, Random.Range(-250, 250));
-	//			room = new Room(randomPosition, 20, 10, 3, 1, 4);
-	//		}
-	//		_roomList.Add(room);
-	//	}
-	//}
-	//private List<GameObject> CreateRoomsAndCorridors()
-	//{
-	//	var gameObjects = new List<GameObject>();
-	//	for (var i = 0; i < _roomList.Count; i++)
-	//	{
-	//		var room = _roomList[i];
-	//		gameObjects.Add(_roomFactory.CreateRoom(room));
-	//		for (var j = 0; j < room.ExitVertices.Count; j++)
-	//		{
-	//			var exitVertices = room.ExitVertices[j];
-	//			gameObjects.Add(_corridorFactory.CreateCorridor(room.Position, exitVertices, 8));
-	//		}
-	//	}
-
-	//	return gameObjects;
-	//}
 }

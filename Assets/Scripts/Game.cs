@@ -6,7 +6,7 @@ public class Game : MonoBehaviour
 	public WorldHandler WorldHandler;
 	public GameObject DudePrefab;
 
-	private List<Room> _dungeon;
+	//private List<Room> _dungeon;
 	private DungeonFactory _dungeonFactory;
 
 	private void Awake()
@@ -16,21 +16,27 @@ public class Game : MonoBehaviour
 
 	private void Start()
 	{
-		StartCoroutine(_dungeonFactory.Create(WorldHandler));
+		MessageHub.Instance.Subscribe<DungeonCreatedMessage>((message) => DungeonCreated());
+		StartCoroutine(_dungeonFactory.CreateDungeon(WorldHandler));
 	}
-}
 
-public class RoomScript : MonoBehaviour
-{
-	public Room room;
-
-	public void OnDrawGizmos()
+	private void DungeonCreated()
 	{
-		if (room == null)
-		{
-			return;
-		}
-
-		Gizmos.DrawWireCube(room.Position, room.Bounds.size);
+		StartCoroutine(_dungeonFactory.CreateMeshes());
 	}
 }
+
+//public class RoomScript : MonoBehaviour
+//{
+//	public Room Room { get; set; }
+
+//	public void OnDrawGizmos()
+//	{
+//		if (Room == null)
+//		{
+//			return;
+//		}
+
+//		Gizmos.DrawWireSphere(Room.Position, Room.Radius);
+//	}
+//}
