@@ -233,7 +233,7 @@ public class RoomFactory : ModuleFactory
 
 		room.SetVertices(newVertices);
 
-		CompleteGameObject(room.Vertices, newTriangles);
+		CompleteGameObject(newVertices, newTriangles);
 
 		return newTriangles;
 	}

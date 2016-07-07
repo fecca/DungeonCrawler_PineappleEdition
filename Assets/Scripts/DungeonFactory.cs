@@ -5,7 +5,7 @@ using UnityEngine;
 public class DungeonFactory
 {
 	private const float CorridorWidth = 5f;
-	private const int MaximumNumberOfRoomsAllowed = 5;
+	private const int MaximumNumberOfRoomsAllowed = 100;
 	private const int MaximumNumberOfRetries = 50;
 
 	private readonly RoomFactory _roomFactory = new RoomFactory();
@@ -83,14 +83,14 @@ public class DungeonFactory
 		{
 			_roomFactory.CreateTriangles(_rooms[i]);
 
-			yield return new WaitForEndOfFrame();
+			yield return new WaitForSeconds(0.1f);
 		}
 
 		for (var i = 0; i < _corridors.Count; i++)
 		{
 			_corridorFactory.CreateTriangles(_corridors[i]);
 
-			yield return new WaitForEndOfFrame();
+			yield return new WaitForSeconds(0.1f);
 		}
 	}
 
@@ -129,7 +129,7 @@ public class DungeonFactory
 	private Corridor CreateCorridor(Exit from, Exit to, int numberOfQuads)
 	{
 		var corridor = new Corridor(from, to, numberOfQuads);
-		corridor.SetVertices(_corridorFactory.CreateVertices(from, to));
+		corridor.SetVertices(_corridorFactory.CreateVertices(from, to, numberOfQuads));
 
 		return corridor;
 	}

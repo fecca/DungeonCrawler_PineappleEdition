@@ -1,28 +1,77 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using UnityEngine;
 
 public class CorridorFactory : ModuleFactory
 {
-	private const int NumberOfQuads = 20;
-
-	public List<Vector3> CreateVertices(Exit fromExit, Exit toExit)
+	public List<Vector3> CreateVertices(Exit fromExit, Exit toExit, int numberOfQuads)
 	{
-		var bottomLeftQuadSize = Vector3.Distance(fromExit.BottomLeftExit, toExit.BottomLeftExit) / NumberOfQuads;
-		var bottomRightQuadSize = Vector3.Distance(fromExit.BottomRightExit, toExit.BottomRightExit) / NumberOfQuads;
-		var topLeftQuadSize = Vector3.Distance(fromExit.TopLeftExit, toExit.TopLeftExit) / NumberOfQuads;
-		var topRightQuadSize = Vector3.Distance(fromExit.TopRightExit, toExit.TopRightExit) / NumberOfQuads;
+		var bottomLeftQuadSize = Vector3.Distance(fromExit.BottomLeftExit, toExit.BottomRightExit) / numberOfQuads;
+		var topLeftQuadSize = Vector3.Distance(fromExit.TopLeftExit, toExit.TopRightExit) / numberOfQuads;
+		var bottomRightQuadSize = Vector3.Distance(fromExit.BottomRightExit, toExit.BottomLeftExit) / numberOfQuads;
+		var topRightQuadSize = Vector3.Distance(fromExit.TopRightExit, toExit.TopLeftExit) / numberOfQuads;
+
+		var bottomLeftDirection = (toExit.BottomRightExit - fromExit.BottomLeftExit).normalized;
+		var topLeftDirection = (toExit.TopRightExit - fromExit.TopLeftExit).normalized;
+		var topRightDirection = (toExit.TopLeftExit - fromExit.TopRightExit).normalized;
+		var bottomRightDirection = (toExit.BottomLeftExit - fromExit.BottomRightExit).normalized;
+
+		var thicknessDirection = (fromExit.BottomLeftExit - fromExit.BottomRightExit).normalized;
+
+		var leftOuterFloor = fromExit.BottomLeftExit;
+		var leftOuterWall = fromExit.TopLeftExit;
+		var leftWall = fromExit.TopLeftExit;
+		var leftFloor = fromExit.BottomLeftExit;
+		var rightFloor = fromExit.BottomRightExit;
+		var rightWall = fromExit.TopRightExit;
+		var rightOuterWall = fromExit.TopRightExit;
+		var rightOuterFloor = fromExit.BottomRightExit;
 
 		var vertices = new List<Vector3>();
-		for (var i = 0; i < NumberOfQuads; i++)
+		vertices.Add(leftOuterFloor);
+		vertices.Add(leftOuterWall);
+		vertices.Add(leftWall);
+		vertices.Add(leftFloor);
+		vertices.Add(rightFloor);
+		vertices.Add(rightWall);
+		vertices.Add(rightOuterWall);
+		vertices.Add(rightOuterFloor);
+
+		//var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//go.transform.localScale = Vector3.one * 0.5f;
+		//go.transform.position = leftOuterFloor;
+		//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//go.transform.localScale = Vector3.one * 0.5f;
+		//go.transform.position = leftOuterWall;
+		//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//go.transform.localScale = Vector3.one * 0.5f;
+		//go.transform.position = leftWall;
+		//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//go.transform.localScale = Vector3.one * 0.5f;
+		//go.transform.position = leftFloor;
+		//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//go.transform.localScale = Vector3.one * 0.5f;
+		//go.transform.position = rightFloor;
+		//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//go.transform.localScale = Vector3.one * 0.5f;
+		//go.transform.position = rightWall;
+		//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//go.transform.localScale = Vector3.one * 0.5f;
+		//go.transform.position = rightOuterWall;
+		//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//go.transform.localScale = Vector3.one * 0.5f;
+		//go.transform.position = rightOuterFloor;
+
+		for (var i = 1; i < numberOfQuads; i++)
 		{
-			var leftOuterFloor = fromExit.BottomLeftExit * (bottomLeftQuadSize * i);
-			var leftOuterWall = fromExit.TopLeftExit * (topLeftQuadSize * i);
-			var leftWall = fromExit.TopLeftExit * (topLeftQuadSize * i);
-			var leftFloor = fromExit.BottomLeftExit * (bottomLeftQuadSize * i);
-			var rightFloor = fromExit.BottomRightExit * (bottomRightQuadSize * i);
-			var rightWall = fromExit.TopRightExit * (topRightQuadSize * i);
-			var rightOuterWall = fromExit.TopRightExit * (topRightQuadSize * i);
-			var rightOuterFloor = fromExit.BottomRightExit * (bottomRightQuadSize * i);
+			leftOuterFloor = fromExit.BottomLeftExit + (thicknessDirection * 1) + (bottomLeftDirection * (bottomLeftQuadSize * i));
+			leftOuterWall = fromExit.TopLeftExit + (thicknessDirection * 1) + (topLeftDirection * (topLeftQuadSize * i));
+			leftWall = fromExit.TopLeftExit + (topLeftDirection * (topLeftQuadSize * i));
+			leftFloor = fromExit.BottomLeftExit + (bottomLeftDirection * (bottomLeftQuadSize * i));
+			rightFloor = fromExit.BottomRightExit + (bottomRightDirection * (bottomRightQuadSize * i));
+			rightWall = fromExit.TopRightExit + (topRightDirection * (topRightQuadSize * i));
+			rightOuterWall = fromExit.TopRightExit - (thicknessDirection * 1) + (topRightDirection * (topRightQuadSize * i));
+			rightOuterFloor = fromExit.BottomRightExit - (thicknessDirection * 1) + (bottomRightDirection * (bottomRightQuadSize * i));
 
 			vertices.Add(leftOuterFloor);
 			vertices.Add(leftOuterWall);
@@ -33,31 +82,49 @@ public class CorridorFactory : ModuleFactory
 			vertices.Add(rightOuterWall);
 			vertices.Add(rightOuterFloor);
 
-			var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			go.transform.localScale = Vector3.one * 0.5f;
-			go.transform.position = leftOuterFloor;
-			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			go.transform.localScale = Vector3.one * 0.5f;
-			go.transform.position = leftOuterWall;
-			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			go.transform.localScale = Vector3.one * 0.5f;
-			go.transform.position = leftWall;
-			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			go.transform.localScale = Vector3.one * 0.5f;
-			go.transform.position = leftFloor;
-			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			go.transform.localScale = Vector3.one * 0.5f;
-			go.transform.position = rightFloor;
-			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			go.transform.localScale = Vector3.one * 0.5f;
-			go.transform.position = rightWall;
-			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			go.transform.localScale = Vector3.one * 0.5f;
-			go.transform.position = rightOuterWall;
-			go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			go.transform.localScale = Vector3.one * 0.5f;
-			go.transform.position = rightOuterFloor;
+			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			//go.transform.localScale = Vector3.one * 0.5f;
+			//go.transform.position = leftOuterFloor;
+			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			//go.transform.localScale = Vector3.one * 0.5f;
+			//go.transform.position = leftOuterWall;
+			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			//go.transform.localScale = Vector3.one * 0.5f;
+			//go.transform.position = leftWall;
+			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			//go.transform.localScale = Vector3.one * 0.5f;
+			//go.transform.position = leftFloor;
+			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			//go.transform.localScale = Vector3.one * 0.5f;
+			//go.transform.position = rightFloor;
+			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			//go.transform.localScale = Vector3.one * 0.5f;
+			//go.transform.position = rightWall;
+			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			//go.transform.localScale = Vector3.one * 0.5f;
+			//go.transform.position = rightOuterWall;
+			//go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			//go.transform.localScale = Vector3.one * 0.5f;
+			//go.transform.position = rightOuterFloor;
 		}
+
+		leftOuterFloor = toExit.BottomRightExit;
+		leftOuterWall = toExit.TopRightExit;
+		leftWall = toExit.TopRightExit;
+		leftFloor = toExit.BottomRightExit;
+		rightFloor = toExit.BottomLeftExit;
+		rightWall = toExit.TopLeftExit;
+		rightOuterWall = toExit.TopLeftExit;
+		rightOuterFloor = toExit.BottomLeftExit;
+
+		vertices.Add(leftOuterFloor);
+		vertices.Add(leftOuterWall);
+		vertices.Add(leftWall);
+		vertices.Add(leftFloor);
+		vertices.Add(rightFloor);
+		vertices.Add(rightWall);
+		vertices.Add(rightOuterWall);
+		vertices.Add(rightOuterFloor);
 
 		return vertices;
 	}
@@ -211,7 +278,9 @@ public class CorridorFactory : ModuleFactory
 			}
 		}
 
-		vertices = newVertices;
+		corridor.SetVertices(newVertices);
+
+		CompleteGameObject(newVertices, triangles);
 
 		return triangles;
 	}
