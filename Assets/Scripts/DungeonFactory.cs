@@ -39,7 +39,7 @@ public class DungeonFactory
 				// Raycast from random exit
 				var raycastDistance = 50;
 				var currentExitDirection = (currentExit.Position - currentRoom.Position).normalized;
-				var ray = new Ray(currentExit.Position, currentExitDirection);
+				var ray = new Ray(currentExit.Position, currentExitDirection + Vector3.up * Random.Range(-0.5f, 0.5f));
 				if (Physics.SphereCast(ray, CorridorWidth * 0.5f, raycastDistance))
 				{
 					_numberOfRetries++;

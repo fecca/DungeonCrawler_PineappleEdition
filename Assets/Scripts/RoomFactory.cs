@@ -20,15 +20,15 @@ public class RoomFactory : ModuleFactory
 			vertices.Add(roomPosition);
 
 			// Floor vertex 1
-			var floorVertex1 = (new Vector3(x * 0.33f, roomPosition.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), z * 0.33f) + roomPosition);
+			var floorVertex1 = (new Vector3(roomPosition.x + x * 0.33f, roomPosition.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), roomPosition.z + z * 0.33f));
 			vertices.Add(floorVertex1);
 
 			// Floor vertex 2
-			var floorVertex2 = (new Vector3(x * 0.66f, roomPosition.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), z * 0.66f) + roomPosition);
+			var floorVertex2 = (new Vector3(roomPosition.x + x * 0.66f, roomPosition.y + Random.Range(FloorModifierIntervalMin, FloorModifierIntervalMax), roomPosition.z + z * 0.66f));
 			vertices.Add(floorVertex2);
 
 			// Corner vertex
-			var cornerVertex = new Vector3(x, roomPosition.y, z) + roomPosition;
+			var cornerVertex = new Vector3(roomPosition.x + x, roomPosition.y, roomPosition.z + z);
 			vertices.Add(cornerVertex);
 
 			var directionNormalized = (cornerVertex - roomPosition).normalized;
