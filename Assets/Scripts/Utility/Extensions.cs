@@ -12,7 +12,6 @@ public static class Extensions
 
 		return list[Random.Range(0, list.Count)];
 	}
-
 	public static void SnapTo(this GameObject self, GameObject staticTarget)
 	{
 		var newModule = self.transform.parent.parent;
@@ -23,7 +22,6 @@ public static class Extensions
 		var correctiveTranslation = staticTarget.transform.position - self.transform.position;
 		newModule.transform.position += correctiveTranslation;
 	}
-
 	public static bool IsEmpty<T>(this ICollection<T> list)
 	{
 		return list.Count <= 0;

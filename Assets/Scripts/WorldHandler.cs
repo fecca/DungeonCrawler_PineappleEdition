@@ -5,15 +5,6 @@ public class WorldHandler : MonoBehaviour
 {
 	private readonly List<BoxCollider> _temporaryColliders = new List<BoxCollider>();
 
-	public void OnDrawGizmos()
-	{
-		for (var i = 0; i < _temporaryColliders.Count; i++)
-		{
-			//var boxCollider = _temporaryColliders[i].GetComponent<BoxCollider>();
-			//Gizmos.DrawWireCube(boxCollider.transform.position, boxCollider.size);
-		}
-	}
-
 	public void AddTemporaryCollider(BoxCollider boxCollider)
 	{
 		_temporaryColliders.Add(boxCollider);

@@ -49,7 +49,7 @@ public class EditorUtility : Editor
 		}
 	}
 
-	public static void SaveMesh(Mesh mesh, string name, bool makeNewInstance, bool optimizeMesh)
+	private static void SaveMesh(Mesh mesh, string name, bool makeNewInstance, bool optimizeMesh)
 	{
 		string path = UnityEditor.EditorUtility.SaveFilePanel("Save Separate Mesh Asset", "Assets/", name, "asset");
 		if (string.IsNullOrEmpty(path)) return;
