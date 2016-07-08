@@ -5,8 +5,8 @@ public class ModuleFactory
 {
 	protected const float AngleModifierIntervalMin = -0.5f;
 	protected const float AngleModifierIntervalMax = 0.5f;
-	protected const float RadiusModifierIntervalMin = 0.9f;
-	protected const float RadiusModifierIntervalMax = 1.1f;
+	protected const float RadiusModifierIntervalMin = 0.95f;
+	protected const float RadiusModifierIntervalMax = 1.05f;
 	protected const float FloorModifierIntervalMin = -0.1f;
 	protected const float FloorModifierIntervalMax = 0.1f;
 	protected const float WallModifierIntervalMin = -0.5f;
