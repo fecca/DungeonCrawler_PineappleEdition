@@ -55,8 +55,8 @@ public static class Values
 		}
 	}
 
-	private const int RoomHeightMin = 10;
-	private const int RoomHeightMax = 15;
+	private const int RoomHeightMin = 5;
+	private const int RoomHeightMax = 10;
 	public static int RandomRoomHeight
 	{
 		get

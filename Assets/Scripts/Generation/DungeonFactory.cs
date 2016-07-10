@@ -14,7 +14,7 @@ public class DungeonFactory
 	private int _numberOfRoomsCreated;
 	private int _numberOfRetries;
 
-	public IEnumerator CreateDungeon(WorldHandler worldHandler)
+	public void CreateDungeon(WorldHandler worldHandler)
 	{
 		_worldHandler = worldHandler;
 
@@ -22,7 +22,7 @@ public class DungeonFactory
 		var currentRoom = CreateRoom(Vector3.zero);
 		if (IsIntersecting(currentRoom))
 		{
-			yield return null;
+			return;
 		}
 		AddRoom(currentRoom);
 
@@ -64,30 +64,24 @@ public class DungeonFactory
 				AddRoom(newRoom);
 				currentRoom = newRoom;
 
-				yield return new WaitForEndOfFrame();
-
 				break;
 			}
 		}
 
 		_worldHandler.DestroyColliders();
 
-		MessageHub.Instance.Publish(new DungeonCreatedMessage(null));
+		CreateMeshes();
 	}
-	public IEnumerator CreateMeshes()
+	public void CreateMeshes()
 	{
 		for (var i = 0; i < _rooms.Count; i++)
 		{
 			_roomFactory.CreateTriangles(_rooms[i]);
-
-			yield return new WaitForEndOfFrame();
 		}
 
 		for (var i = 0; i < _corridors.Count; i++)
 		{
 			_corridorFactory.CreateTriangles(_corridors[i]);
-
-			yield return new WaitForEndOfFrame();
 		}
 	}
 
