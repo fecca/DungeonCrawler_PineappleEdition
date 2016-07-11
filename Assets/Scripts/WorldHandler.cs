@@ -3,18 +3,41 @@ using UnityEngine;
 
 public class WorldHandler : MonoBehaviour
 {
-	private readonly List<BoxCollider> _temporaryColliders = new List<BoxCollider>();
+	private List<Collider> _colliders;
 
-	public void AddTemporaryCollider(BoxCollider boxCollider)
+	private void Awake()
 	{
-		_temporaryColliders.Add(boxCollider);
+		_colliders = new List<Collider>();
 	}
-	public void DestroyColliders()
+
+	public void CreateDungeon()
 	{
-		for (var i = _temporaryColliders.Count - 1; i >= 0; i--)
+		var meshFactory = gameObject.AddComponent<MeshFactory>();
+		var moduleFactory = new ModuleFactory();
+
+		var dungeonData = moduleFactory.GenerateDungeonData(this);
+
+		DestroyColliders();
+		meshFactory.CreateDungeonMeshes(dungeonData);
+	}
+
+	public void AddTemporaryCollider(Vector3 position, Vector3 size, Vector3 lookAtPosition)
+	{
+		var tmpGameObject = new GameObject();
+		tmpGameObject.transform.position = position;
+
+		var collider = tmpGameObject.AddComponent<BoxCollider>();
+		collider.size = size;
+		collider.transform.LookAt(lookAtPosition);
+
+		_colliders.Add(collider);
+	}
+	private void DestroyColliders()
+	{
+		for (var i = _colliders.Count - 1; i >= 0; i--)
 		{
-			var boxCollider = _temporaryColliders[i];
-			_temporaryColliders.Remove(boxCollider);
+			var boxCollider = _colliders[i];
+			_colliders.Remove(boxCollider);
 			Destroy(boxCollider.gameObject);
 		}
 	}

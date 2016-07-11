@@ -2,19 +2,15 @@
 
 public class Game : MonoBehaviour
 {
-	public WorldHandler WorldHandler;
-	public GameObject DudePrefab;
-
-	private DungeonFactory _dungeonFactory;
-
-	private void Awake()
-	{
-		_dungeonFactory = new DungeonFactory();
-	}
+	[SerializeField]
+	private WorldHandler WorldHandler;
+	[SerializeField]
+	private GameObject DudePrefab;
 
 	private void Start()
 	{
-		_dungeonFactory.CreateDungeon(WorldHandler);
+		WorldHandler.CreateDungeon();
+
 		Instantiate(DudePrefab, Vector3.up, Quaternion.identity);
 	}
 }

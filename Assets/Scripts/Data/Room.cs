@@ -10,13 +10,15 @@ public class Room : DungeonObject
 	public int Thickness { get; private set; }
 	public int NumberOfExits { get; private set; }
 	public Bounds Bounds { get; private set; }
-	public List<Exit> PotentialExits { get; set; }
+	public List<Exit> Corners { get; set; }
 	public List<int> ExitCorners { get; set; }
 	public Exit Exit { get; set; }
 	public Exit LinksTo { get; set; }
 
 	public Room(Vector3 position, int numberOfCorners, int radius, int height, int thickness, int numberOfExits)
 	{
+		Type = ModuleType.Room;
+
 		Position = position;
 		NumberOfCorners = numberOfCorners;
 		Radius = radius;
@@ -25,10 +27,16 @@ public class Room : DungeonObject
 		NumberOfExits = numberOfExits;
 		Bounds = new Bounds(Position, new Vector3(Radius * 2 + Thickness * 2, Height, Radius * 2 + Thickness * 2));
 		ExitCorners = new List<int>();
-		PotentialExits = new List<Exit>();
+		Corners = new List<Exit>();
 	}
 
-	public void FindPotentialCorners()
+	public override void SetVertices(List<Vector3> vertices)
+	{
+		base.SetVertices(vertices);
+		FindPotentialCorners();
+	}
+
+	private void FindPotentialCorners()
 	{
 		var groupSize = Vertices.Count / NumberOfCorners;
 
@@ -41,7 +49,7 @@ public class Room : DungeonObject
 			var bottomRight = Vertices[nextGroup + 6];
 			var topRight = Vertices[nextGroup + 5];
 
-			PotentialExits.Add(new Exit(i, topLeft, bottomLeft, bottomRight, topRight));
+			Corners.Add(new Exit(i, topLeft, bottomLeft, bottomRight, topRight));
 		}
 	}
 }
