@@ -20,7 +20,7 @@ public class ModuleFactory
 			{
 				var currentExit = currentRoom.Corners.GetRandomElement();
 
-				// Sphere cast
+				// Check corridor collision
 				var raycastDistance = 50;
 				var currentExitDirection = (currentExit.Position - currentRoom.Position).normalized;
 				var corridorWidth = Vector3.Distance(currentExit.BottomLeftExit, currentExit.BottomRightExit);
@@ -31,26 +31,27 @@ public class ModuleFactory
 					continue;
 				}
 
+				// Check room collision
 				var newRoomPosition = ray.GetPoint(raycastDistance);
 				if (Physics.CheckSphere(newRoomPosition, Values.RoomRadiusMax))
 				{
 					continue;
 				}
 
-				// Room
+				// Create room
 				var newRoom = CreateRoom(newRoomPosition);
 				worldHandler.AddTemporaryCollider(newRoom.Position, newRoom.Bounds.size, Vector3.zero);
 				modules.Add(newRoom);
 				numberOfRoomsCreated++;
 
-				// Exit
+				// Set exits
 				var newExit = FindNearestExit(newRoom.Corners, currentExit);
 				currentRoom.Exit = currentExit;
 				currentRoom.LinksTo = newExit;
 				currentRoom.ExitCorners.Add(currentExit.CornerIndex);
 				newRoom.ExitCorners.Add(newExit.CornerIndex);
 
-				// Corridor
+				// Craete corridor
 				var corridor = CreateCorridor(currentExit, newExit);
 				modules.Add(corridor);
 				var colliderSize = new Vector3(corridorWidth, corridorWidth, Vector3.Distance(corridor.From.Position, corridor.To.Position));
