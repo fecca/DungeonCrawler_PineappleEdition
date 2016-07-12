@@ -31,8 +31,14 @@ public class ModuleFactory
 					continue;
 				}
 
+				var newRoomPosition = ray.GetPoint(raycastDistance);
+				if (Physics.CheckSphere(newRoomPosition, Values.RoomRadiusMax))
+				{
+					continue;
+				}
+
 				// Room
-				var newRoom = CreateRoom(ray.GetPoint(raycastDistance));
+				var newRoom = CreateRoom(newRoomPosition);
 				worldHandler.AddTemporaryCollider(newRoom.Position, newRoom.Bounds.size, Vector3.zero);
 				modules.Add(newRoom);
 				numberOfRoomsCreated++;

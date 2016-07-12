@@ -2,7 +2,7 @@
 
 public static class Values
 {
-	public const int MaximumNumberOfRoomsAllowed = 20;
+	public const int MaximumNumberOfRoomsAllowed = 100;
 	public const int MaximumNumberOfRetries = 10;
 
 	private const float RoomFloorHeightMin = -0.1f;
@@ -46,7 +46,7 @@ public static class Values
 	}
 
 	private const int RoomRadiusMin = 20;
-	private const int RoomRadiusMax = 30;
+	public const int RoomRadiusMax = 30;
 	public static int RandomRoomRadius
 	{
 		get

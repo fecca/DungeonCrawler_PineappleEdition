@@ -26,11 +26,11 @@ public class WorldHandler : MonoBehaviour
 		var tmpGameObject = new GameObject();
 		tmpGameObject.transform.position = position;
 
-		var collider = tmpGameObject.AddComponent<BoxCollider>();
-		collider.size = size;
-		collider.transform.LookAt(lookAtPosition);
+		var tmpCollider = tmpGameObject.AddComponent<BoxCollider>();
+		tmpCollider.size = size;
+		tmpCollider.transform.LookAt(lookAtPosition);
 
-		_colliders.Add(collider);
+		_colliders.Add(tmpCollider);
 	}
 	private void DestroyColliders()
 	{
