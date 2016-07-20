@@ -15,6 +15,8 @@ public class Room : DungeonObject
 	public Exit Exit { get; set; }
 	public Exit LinksTo { get; set; }
 
+	public List<Exit> LeadsTo { get; set; }
+
 	public Room(Vector3 position, int numberOfCorners, int radius, int height, int thickness, int numberOfExits)
 	{
 		Type = ModuleType.Room;
@@ -42,14 +44,20 @@ public class Room : DungeonObject
 
 		for (var i = 0; i < NumberOfCorners; i++)
 		{
-			var thisGroup = groupSize * i;
-			var nextGroup = i < NumberOfCorners - 1 ? thisGroup + groupSize : 0;
-			var topLeft = Vertices[thisGroup + 5];
-			var bottomLeft = Vertices[thisGroup + 6];
-			var bottomRight = Vertices[nextGroup + 6];
-			var topRight = Vertices[nextGroup + 5];
+			var thisGroup = i;
+			var thisOuterGroup = thisGroup - 1 < 0 ? NumberOfCorners - 1 : thisGroup - 1;
+			var nextGroup = thisGroup + 1 >= NumberOfCorners ? 0 : thisGroup + 1;
+			var nextOuterGroup = nextGroup + 1 >= NumberOfCorners ? 0 : nextGroup + 1;
 
-			Corners.Add(new Exit(i, topLeft, bottomLeft, bottomRight, topRight));
+			Corners.Add(new Exit(i,
+				Vertices[thisOuterGroup * groupSize + 6],
+				Vertices[thisOuterGroup * groupSize + 5],
+				Vertices[thisGroup * groupSize + 5],
+				Vertices[thisGroup * groupSize + 6],
+				Vertices[nextGroup * groupSize + 6],
+				Vertices[nextGroup * groupSize + 5],
+				Vertices[nextOuterGroup * groupSize + 5],
+				Vertices[nextOuterGroup * groupSize + 6]));
 		}
 	}
 }

@@ -95,8 +95,8 @@ public static class Values
 		}
 	}
 
-	private const int NumberOfCorridorQuadsMin = 2;
-	private const int NumberOfCorridorQuadsMax = 5;
+	private const int NumberOfCorridorQuadsMin = 4;
+	private const int NumberOfCorridorQuadsMax = 9;
 	public static int RandomNumberOfCorridorQuads
 	{
 		get
