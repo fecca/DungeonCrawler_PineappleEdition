@@ -23,7 +23,7 @@ public class ModuleFactory
 				// Check corridor collision
 				var raycastDistance = 50;
 				var currentExitDirection = (currentExit.Position - currentRoom.Position).normalized;
-				var corridorWidth = Vector3.Distance(currentExit.BottomLeftExit, currentExit.BottomRightExit);
+				var corridorWidth = Vector3.Distance(currentExit.LeftFloor, currentExit.RightFloor);
 				var ray = new Ray(currentExit.Position, currentExitDirection + Values.RandomRoomHeightPosition);
 				if (Physics.SphereCast(ray, corridorWidth * 0.5f, raycastDistance))
 				{
@@ -51,7 +51,7 @@ public class ModuleFactory
 				currentRoom.ExitCorners.Add(currentExit.CornerIndex);
 				newRoom.ExitCorners.Add(newExit.CornerIndex);
 
-				// Craete corridor
+				// Create corridor
 				var corridor = CreateCorridor(currentExit, newExit);
 				modules.Add(corridor);
 				var colliderSize = new Vector3(corridorWidth, corridorWidth, Vector3.Distance(corridor.From.Position, corridor.To.Position));
@@ -132,76 +132,77 @@ public class ModuleFactory
 	}
 	private List<Vector3> CreateCorridorVertices(Exit fromExit, Exit toExit, int numberOfQuads)
 	{
-		var bottomLeftQuadSize = Vector3.Distance(fromExit.BottomLeftExit, toExit.BottomRightExit) / numberOfQuads;
-		var topLeftQuadSize = Vector3.Distance(fromExit.TopLeftExit, toExit.TopRightExit) / numberOfQuads;
-		var bottomRightQuadSize = Vector3.Distance(fromExit.BottomRightExit, toExit.BottomLeftExit) / numberOfQuads;
-		var topRightQuadSize = Vector3.Distance(fromExit.TopRightExit, toExit.TopLeftExit) / numberOfQuads;
-
-		var bottomLeftDirection = (toExit.BottomRightExit - fromExit.BottomLeftExit).normalized;
-		var topLeftDirection = (toExit.TopRightExit - fromExit.TopLeftExit).normalized;
-		var topRightDirection = (toExit.TopLeftExit - fromExit.TopRightExit).normalized;
-		var bottomRightDirection = (toExit.BottomLeftExit - fromExit.BottomRightExit).normalized;
-
-		var thicknessDirection = (fromExit.BottomLeftExit - fromExit.BottomRightExit).normalized;
-
-		var leftOuterFloor = fromExit.BottomLeftExit;
-		var leftOuterWall = fromExit.TopLeftExit;
-		var leftWall = fromExit.TopLeftExit;
-		var leftFloor = fromExit.BottomLeftExit;
-		var rightFloor = fromExit.BottomRightExit;
-		var rightWall = fromExit.TopRightExit;
-		var rightOuterWall = fromExit.TopRightExit;
-		var rightOuterFloor = fromExit.BottomRightExit;
-
 		var vertices = new List<Vector3>();
-		vertices.Add(leftOuterFloor);
-		vertices.Add(leftOuterWall);
-		vertices.Add(leftWall);
-		vertices.Add(leftFloor);
-		vertices.Add(rightFloor);
-		vertices.Add(rightWall);
-		vertices.Add(rightOuterWall);
-		vertices.Add(rightOuterFloor);
+
+		var leftOuterFloorDistance = Vector3.Distance(fromExit.LeftOuterFloor, toExit.RightOuterFloor);
+		var leftOuterFloorDirection = (toExit.RightOuterFloor - fromExit.LeftOuterFloor).normalized;
+		var leftOuterFloorQuadLength = leftOuterFloorDistance / numberOfQuads;
+		vertices.Add(fromExit.LeftOuterFloor);
+
+		var leftOuterWallDistance = Vector3.Distance(fromExit.LeftOuterWall, toExit.RightOuterWall);
+		var leftOuterWallDirection = (toExit.RightOuterWall - fromExit.LeftOuterWall).normalized;
+		var leftOuterWallQuadLength = leftOuterWallDistance / numberOfQuads;
+		vertices.Add(fromExit.LeftOuterWall);
+
+		var leftWallDistance = Vector3.Distance(fromExit.LeftWall, toExit.RightWall);
+		var leftWallDirection = (toExit.RightWall - fromExit.LeftWall).normalized;
+		var leftWallQuadLength = leftWallDistance / numberOfQuads;
+		vertices.Add(fromExit.LeftWall);
+
+		var leftFloorDistance = Vector3.Distance(fromExit.LeftFloor, toExit.RightFloor);
+		var leftFloorDirection = (toExit.RightFloor - fromExit.LeftFloor).normalized;
+		var leftFloorQuadLength = leftFloorDistance / numberOfQuads;
+		vertices.Add(fromExit.LeftFloor);
+
+		var rightFloorDistance = Vector3.Distance(fromExit.RightFloor, toExit.LeftFloor);
+		var rightFloorDirection = (toExit.LeftFloor - fromExit.RightFloor).normalized;
+		var rightFloorQuadLength = rightFloorDistance / numberOfQuads;
+		vertices.Add(fromExit.RightFloor);
+
+		var rightWallDistance = Vector3.Distance(fromExit.RightWall, toExit.LeftWall);
+		var rightWallDirection = (toExit.LeftWall - fromExit.RightWall).normalized;
+		var rightWallQuadLength = rightWallDistance / numberOfQuads;
+		vertices.Add(fromExit.RightWall);
+
+		var rightOuterWallDistance = Vector3.Distance(fromExit.RightOuterWall, toExit.LeftOuterWall);
+		var rightOuterWallDirection = (toExit.LeftOuterWall - fromExit.RightOuterWall).normalized;
+		var rightOuterWallQuadLength = rightOuterWallDistance / numberOfQuads;
+		vertices.Add(fromExit.RightOuterWall);
+
+		var rightOuterFloorDistance = Vector3.Distance(fromExit.RightOuterFloor, toExit.LeftOuterFloor);
+		var rightOuterFloorDirection = (toExit.LeftOuterFloor - fromExit.RightOuterFloor).normalized;
+		var rightOuterFloorQuadLength = rightOuterFloorDistance / numberOfQuads;
+		vertices.Add(fromExit.RightOuterFloor);
 
 		for (var i = 1; i < numberOfQuads; i++)
 		{
-			var randomY = Vector3.up * Random.Range(-0.5f, 0.5f);
-			leftOuterFloor = fromExit.BottomLeftExit + (thicknessDirection * 1) + (bottomLeftDirection * (bottomLeftQuadSize * i));
-			leftOuterWall = fromExit.TopLeftExit + (thicknessDirection * 1) + (topLeftDirection * (topLeftQuadSize * i));
-			leftWall = fromExit.TopLeftExit + (topLeftDirection * (topLeftQuadSize * i));
-			leftFloor = fromExit.BottomLeftExit + (bottomLeftDirection * (bottomLeftQuadSize * i));
-			rightFloor = fromExit.BottomRightExit + (bottomRightDirection * (bottomRightQuadSize * i));
-			rightWall = fromExit.TopRightExit + (topRightDirection * (topRightQuadSize * i));
-			rightOuterWall = fromExit.TopRightExit - (thicknessDirection * 1) + (topRightDirection * (topRightQuadSize * i));
-			rightOuterFloor = fromExit.BottomRightExit - (thicknessDirection * 1) + (bottomRightDirection * (bottomRightQuadSize * i));
+			var leftOuterFloor = fromExit.LeftOuterFloor + leftOuterFloorDirection * leftOuterFloorQuadLength * i;
+			var leftOuterWall = fromExit.LeftOuterWall + leftOuterWallDirection * leftOuterWallQuadLength * i;
+			var leftWall = fromExit.LeftWall + leftWallDirection * leftWallQuadLength * i;
+			var leftFloor = fromExit.LeftFloor + leftFloorDirection * leftFloorQuadLength * i;
+			var rightFloor = fromExit.RightFloor + rightFloorDirection * rightFloorQuadLength * i;
+			var rightWall = fromExit.RightWall + rightWallDirection * rightWallQuadLength * i;
+			var rightOuterWall = fromExit.RightOuterWall + rightOuterWallDirection * rightOuterWallQuadLength * i;
+			var rightOuterFloor = fromExit.RightOuterFloor + rightOuterFloorDirection * rightOuterFloorQuadLength * i;
 
-			vertices.Add(leftOuterFloor + randomY);
-			vertices.Add(leftOuterWall + randomY);
-			vertices.Add(leftWall + randomY);
-			vertices.Add(leftFloor + randomY);
-			vertices.Add(rightFloor + randomY);
-			vertices.Add(rightWall + randomY);
-			vertices.Add(rightOuterWall + randomY);
-			vertices.Add(rightOuterFloor + randomY);
+			vertices.Add(Vector3.Lerp(leftOuterFloor, leftFloor, 0.5f));
+			vertices.Add(Vector3.Lerp(leftOuterWall, leftWall, 0.5f));
+			vertices.Add(leftWall);
+			vertices.Add(leftFloor);
+			vertices.Add(rightFloor);
+			vertices.Add(rightWall);
+			vertices.Add(Vector3.Lerp(rightOuterWall, rightWall, 0.5f));
+			vertices.Add(Vector3.Lerp(rightOuterFloor, rightFloor, 0.5f));
 		}
 
-		leftOuterFloor = toExit.BottomRightExit;
-		leftOuterWall = toExit.TopRightExit;
-		leftWall = toExit.TopRightExit;
-		leftFloor = toExit.BottomRightExit;
-		rightFloor = toExit.BottomLeftExit;
-		rightWall = toExit.TopLeftExit;
-		rightOuterWall = toExit.TopLeftExit;
-		rightOuterFloor = toExit.BottomLeftExit;
-
-		vertices.Add(leftOuterFloor);
-		vertices.Add(leftOuterWall);
-		vertices.Add(leftWall);
-		vertices.Add(leftFloor);
-		vertices.Add(rightFloor);
-		vertices.Add(rightWall);
-		vertices.Add(rightOuterWall);
-		vertices.Add(rightOuterFloor);
+		vertices.Add(toExit.RightOuterFloor);
+		vertices.Add(toExit.RightOuterWall);
+		vertices.Add(toExit.RightWall);
+		vertices.Add(toExit.RightFloor);
+		vertices.Add(toExit.LeftFloor);
+		vertices.Add(toExit.LeftWall);
+		vertices.Add(toExit.LeftOuterWall);
+		vertices.Add(toExit.LeftOuterFloor);
 
 		return vertices;
 	}

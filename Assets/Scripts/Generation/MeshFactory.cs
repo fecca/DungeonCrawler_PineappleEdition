@@ -197,8 +197,6 @@ public class MeshFactory : MonoBehaviour
 
 		room.SetVertices(newVertices);
 
-		CreateGameObject(newVertices, newTriangles);
-
 		return newTriangles;
 	}
 	private List<int> CreateTriangles(Corridor corridor)
@@ -210,7 +208,7 @@ public class MeshFactory : MonoBehaviour
 
 		for (var i = 0; i < corridor.NumberOfQuads; i++)
 		{
-			var thisGroup = (numberOfVerticesPerGroup * i);
+			var thisGroup = numberOfVerticesPerGroup * i;
 			var nextGroup = thisGroup + numberOfVerticesPerGroup;
 
 			var thisLeftOutsideFloorVertex = thisGroup;
@@ -352,8 +350,6 @@ public class MeshFactory : MonoBehaviour
 		}
 
 		corridor.SetVertices(newVertices);
-
-		CreateGameObject(newVertices, triangles);
 
 		return triangles;
 	}
