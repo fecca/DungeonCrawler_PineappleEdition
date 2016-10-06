@@ -18,8 +18,6 @@ public class MeshFactory : MonoBehaviour
 					var corridorTriangles = CreateTriangles(dungeonObject as Corridor);
 					CreateGameObject(dungeonObject.Vertices, corridorTriangles);
 					break;
-				default:
-					break;
 			}
 		}
 	}
@@ -376,7 +374,7 @@ public class MeshFactory : MonoBehaviour
 		meshFilter.mesh = mesh;
 
 		var meshRenderer = newGameObject.AddComponent<MeshRenderer>();
-		meshRenderer.material = Resources.Load<Material>("WallMaterial_Unlit");
+		meshRenderer.material = Resources.Load<Material>("Fall_Leafs");
 
 		var meshCollider = newGameObject.AddComponent<MeshCollider>();
 		meshCollider.sharedMesh = mesh;
